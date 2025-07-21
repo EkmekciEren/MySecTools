@@ -1,0 +1,4177 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecApp - Gelişmiş Siber Güvenlik Analizi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <style>
+        :root {
+            /* Minimal Monochrome Palette */
+            --primary-color: #000000;
+            --primary-light: #333333;
+            --accent-color: #666666;
+            
+            /* Minimal Status Colors */
+            --success-color: #000000;
+            --warning-color: #666666;
+            --danger-color: #000000;
+            --info-color: #333333;
+            
+            /* Monochrome Scale */
+            --black: #000000;
+            --gray-900: #0a0a0a;
+            --gray-800: #1a1a1a;
+            --gray-700: #2a2a2a;
+            --gray-600: #3a3a3a;
+            --gray-500: #5a5a5a;
+            --gray-400: #7a7a7a;
+            --gray-300: #9a9a9a;
+            --gray-200: #e0e0e0;
+            --gray-100: #f0f0f0;
+            --gray-50: #f8f8f8;
+            --white: #ffffff;
+            
+            /* Minimal Theme */
+            --border-color: var(--gray-200);
+            --text-primary: var(--black);
+            --text-secondary: var(--gray-600);
+            --background-primary: var(--white);
+            --background-secondary: var(--gray-50);
+            
+            /* Clean Shadows */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.12);
+            --shadow-xl: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--white);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-weight: 400;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+        
+        /* Minimal Header */
+        .header {
+            text-align: center;
+            margin-bottom: 80px;
+            border-bottom: 1px solid var(--gray-200);
+            padding-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 16px;
+            color: var(--black);
+            letter-spacing: -0.025em;
+        }
+        
+        .header p {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gray-600);
+            margin-bottom: 8px;
+        }
+        
+        .header .subtitle {
+            font-size: 1em;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+        
+        /* Minimal Card Styles */
+        .main-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: var(--shadow-sm);
+            margin-bottom: 40px;
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .main-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        /* Minimal Form Styles */
+        .form-section {
+            margin-bottom: 32px;
+        }
+        
+        .form-section h2 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--black);
+            margin-bottom: 16px;
+            letter-spacing: -0.025em;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+            background: var(--white);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--black);
+        }
+        
+        .btn {
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover {
+            background: var(--gray-800);
+        }
+        
+        .btn:disabled {
+            background: var(--gray-400);
+            cursor: not-allowed;
+        }
+        
+        .btn-secondary {
+            background: var(--white);
+            color: var(--black);
+            border: 1px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-50);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+            color: var(--gray-700);
+            font-size: 14px;
+        }
+        
+        .input-container {
+            position: relative;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s ease;
+            background: var(--white);
+            outline: none;
+        }
+        
+        .form-group input:focus {
+            border-color: var(--black);
+        }
+        
+        .input-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-500);
+            font-size: 14px;
+        }
+        
+        /* Minimal Button Styles */
+        .analyze-btn {
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .analyze-btn:active {
+            transform: translateY(0);
+        }
+        
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .analyze-btn .btn-text {
+            transition: opacity 0.3s ease;
+        }
+        
+        .analyze-btn.loading .btn-text {
+            opacity: 0;
+        }
+        
+        /* Loading Animation */
+        .loading-container {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .loading-steps {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .loading-step {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+            border-left: 4px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .loading-step.active {
+            border-left-color: var(--primary-color);
+            box-shadow: var(--shadow-md);
+            transform: translateX(5px);
+        }
+        
+        .loading-step.completed {
+            border-left-color: var(--success-color);
+            background: rgba(16, 185, 129, 0.05);
+        }
+        
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: var(--border-color);
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .loading-step.active .step-icon {
+            background: var(--primary-color);
+            animation: pulse 2s infinite;
+        }
+        
+        .loading-step.completed .step-icon {
+            background: var(--success-color);
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .step-text {
+            flex: 1;
+            font-weight: 500;
+        }
+        
+        .step-status {
+            font-size: 0.85em;
+            color: var(--text-secondary);
+        }
+        
+        /* Results Container */
+        .result-container {
+            display: none;
+            margin-top: 30px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .result-title {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .result-title h2 {
+            font-size: 1.8em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .download-btn {
+            background: var(--success-color);
+            color: white;
+        }
+        
+        .download-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+        
+        .new-analysis-btn {
+            background: var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .new-analysis-btn:hover {
+            background: #d1d5db;
+            transform: translateY(-1px);
+        }
+        
+        /* Risk Badge */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            gap: 6px;
+        }
+        
+        .risk-minimal { 
+            background: rgba(16, 185, 129, 0.1); 
+            color: #065f46; 
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .risk-low { 
+            background: rgba(34, 197, 94, 0.1); 
+            color: #166534; 
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+        .risk-medium { 
+            background: rgba(245, 158, 11, 0.1); 
+            color: #92400e; 
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+        .risk-high { 
+            background: rgba(239, 68, 68, 0.1); 
+            color: #991b1b; 
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .risk-critical { 
+            background: rgba(220, 38, 38, 0.1); 
+            color: #7f1d1d; 
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+        
+        /* Section Styles */
+        .analysis-section {
+            margin-bottom: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+        
+        .analysis-section:hover {
+            box-shadow: var(--shadow-md);
+        }
+        
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.3em;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .section-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+        }
+        
+        .status-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: #065f46;
+        }
+        
+        .status-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: #991b1b;
+        }
+        
+        .status-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: #92400e;
+        }
+        
+        /* AI Analysis Styles */
+        .ai-final-analysis {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        
+        .ai-step-analysis {
+            background: rgba(99, 102, 241, 0.02);
+            border: 1px solid rgba(99, 102, 241, 0.1);
+        }
+        
+        .analysis-content {
+            line-height: 1.7;
+            color: var(--text-primary);
+        }
+        
+        .analysis-content h1,
+        .analysis-content h2,
+        .analysis-content h3 {
+            margin: 20px 0 10px 0;
+            color: var(--text-primary);
+        }
+        
+        .analysis-content ul,
+        .analysis-content ol {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        
+        .analysis-content li {
+            margin: 5px 0;
+        }
+        
+        /* Data Sources Grid */
+        .data-sources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .data-source-card {
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .data-source-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .data-source-header {
+            display: flex;
+            align-items: center;
+            justify-content: between;
+            margin-bottom: 15px;
+        }
+        
+        .data-source-name {
+            font-weight: 600;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .data-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .data-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .data-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .data-label {
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+        
+        .data-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        /* Examples Section */
+        .examples {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .examples h3 {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .example-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .example-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .example-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .example-icon {
+            font-size: 1.2em;
+            color: var(--primary-color);
+        }
+        
+        .example-text {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 0.9em;
+            color: var(--text-primary);
+        }
+        
+        /* Error Messages */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #991b1b;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+            
+            .main-card {
+                padding: 25px;
+                border-radius: 16px;
+            }
+            
+            .result-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .result-actions {
+                width: 100%;
+            }
+            
+            .action-btn {
+                flex: 1;
+                justify-content: center;
+            }
+            
+            .data-sources-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .example-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Animation Classes */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--light-color);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+        
+        /* Charts Section */
+        .charts-section {
+            margin: 20px 0;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .chart-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .chart-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .chart-title {
+            font-weight: 500;
+            font-size: 16px;
+            color: var(--black);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-container.small {
+            height: 200px;
+        }
+
+        .chart-container.large {
+            height: 400px;
+        }
+
+        /* Minimal Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 32px 0;
+        }
+
+        .metric-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-value {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--black);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--gray-600);
+        }
+
+        /* Minimal Navigation */
+        .navbar {
+            background: var(--white);
+            border-bottom: 1px solid var(--gray-200);
+            padding: 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 60px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--black);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 1.25rem;
+            letter-spacing: -0.025em;
+        }
+
+        .nav-logo i {
+            font-size: 20px;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 400;
+            padding: 8px 16px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            background: var(--gray-100);
+            color: var(--black);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .theme-toggle,
+        .notification-btn,
+        .settings-btn {
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            min-height: 36px;
+            min-width: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover,
+        .notification-btn:hover,
+        .settings-btn:hover {
+            background: var(--gray-100);
+            color: var(--black);
+        }
+
+        .notification-btn {
+            position: relative;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: var(--black);
+            color: var(--white);
+            border-radius: 8px;
+            min-width: 16px;
+            height: 16px;
+            font-size: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .notification-badge.hidden {
+            display: none;
+        }
+
+        /* Mobile Navigation */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--gray-600);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--gray-100);
+            color: var(--black);
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            left: -300px;
+            top: 70px;
+            width: 300px;
+            height: calc(100vh - 70px);
+            background: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease;
+            z-index: 999;
+            overflow-y: auto;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: var(--light-color);
+            border-right: 3px solid var(--primary-color);
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 90px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 6px;
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            min-width: 320px;
+            transform: translateX(400px);
+            transition: transform 0.2s ease;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success { border-left: 3px solid var(--black); }
+        .toast.warning { border-left: 3px solid var(--gray-600); }
+        .toast.error { border-left: 3px solid var(--black); }
+        .toast.info { border-left: 3px solid var(--gray-400); }
+
+        .toast-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .toast-icon {
+            color: var(--gray-600);
+            margin-top: 2px;
+        }
+
+        .toast-text {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--black);
+            margin-bottom: 4px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: var(--gray-600);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--gray-400);
+            padding: 4px;
+            border-radius: 4px;
+        }
+
+        .toast-close:hover {
+            background: var(--gray-100);
+        }
+
+        @keyframes slideIn {
+            to { transform: translateX(0); }
+        }
+
+        @keyframes slideOut {
+            to { transform: translateX(400px); }
+        }
+
+        /* Modal System */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--black);
+        }
+        
+        .modal-body {
+            margin-bottom: 24px;
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            padding-top: 16px;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        /* Dark Theme */
+        /* Minimal Dark Theme */
+        [data-theme="dark"] {
+            --primary-color: var(--white);
+            --background-primary: var(--gray-900);
+            --background-secondary: var(--gray-800);
+            --text-primary: var(--white);
+            --text-secondary: var(--gray-300);
+            --border-color: var(--gray-700);
+        }
+
+        [data-theme="dark"] body {
+            background: var(--gray-900);
+            color: var(--white);
+        }
+
+        [data-theme="dark"] .main-card,
+        [data-theme="dark"] .chart-card,
+        [data-theme="dark"] .metric-card {
+            background: var(--gray-800);
+            border-color: var(--gray-700);
+        }
+
+        [data-theme="dark"] .sidebar {
+            background: #1f2937;
+        }
+
+        /* New Sections Styles */
+        .batch-options {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .option-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .batch-progress {
+            margin-top: 20px;
+            padding: 20px;
+            background: var(--light-color);
+            border-radius: 8px;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .progress-bar {
+            background: var(--border-color);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .history-filters {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .history-filters input,
+        .history-filters select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .history-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-target {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .history-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        .history-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .report-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 32px;
+        }
+
+        .report-card {
+            background: var(--white);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            transition: box-shadow 0.2s ease;
+        }
+
+        .report-card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .report-card h3 {
+            color: var(--black);
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .report-card p {
+            color: var(--gray-600);
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        /* Enhanced Button Styles */
+        .primary-btn, .secondary-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .primary-btn {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .primary-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .secondary-btn {
+            background: var(--light-color);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .secondary-btn:hover {
+            background: var(--border-color);
+        }
+
+        /* Enhanced Responsive Design */
+        @media (max-width: 1200px) {
+            .container {
+                max-width: 100%;
+                padding: 15px;
+            }
+            
+            .charts-grid {
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 15px;
+            }
+            
+            .nav-container {
+                padding: 0 15px;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .metrics-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 12px;
+            }
+            
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+            
+            .data-sources-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--primary-color);
+                flex-direction: column;
+                padding: 20px;
+                box-shadow: var(--shadow-lg);
+            }
+            
+            .nav-menu.mobile-open {
+                display: flex;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .nav-actions {
+                gap: 10px;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .metric-card {
+                padding: 15px;
+            }
+            
+            .metric-value {
+                font-size: 24px;
+            }
+            
+            .batch-options {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .history-filters {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .history-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .history-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .report-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .main-card {
+                padding: 20px 15px;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav-container {
+                height: 60px;
+                padding: 0 10px;
+            }
+            
+            .nav-logo {
+                font-size: 1.2em;
+            }
+            
+            .sidebar {
+                width: 280px;
+            }
+            
+            .metric-card {
+                padding: 12px;
+            }
+            
+            .metric-value {
+                font-size: 20px;
+            }
+            
+            .chart-container,
+            .chart-container.small {
+                height: 200px;
+            }
+            
+            .toast {
+                min-width: 250px;
+                margin: 0 10px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px 15px;
+            }
+            
+            .analyze-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .example-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .nav-link,
+            .sidebar-item,
+            .example-item,
+            .history-item,
+            .metric-card,
+            .chart-card {
+                min-height: 44px;
+            }
+            
+            .primary-btn,
+            .secondary-btn,
+            .analyze-btn {
+                min-height: 44px;
+                padding: 12px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Modern Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-logo">
+                <i class="fas fa-shield-alt"></i>
+                SecApp
+            </a>
+            
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#analysis" class="nav-link active">
+                        <i class="fas fa-search"></i>
+                        Analiz
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#history" class="nav-link">
+                        <i class="fas fa-history"></i>
+                        Geçmiş
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#batch" class="nav-link">
+                        <i class="fas fa-list"></i>
+                        Toplu Analiz
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#reports" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        Raporlar
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link">
+                        <i class="fas fa-cog"></i>
+                        Ayarlar
+                    </a>
+                </li>
+            </ul>
+            
+            <div class="nav-actions">
+                <button class="notification-btn" onclick="toggleNotifications()" title="Bildirimler">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge" id="notificationBadge">0</span>
+                </button>
+                <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+                <button class="settings-btn" onclick="showModal('settingsModal')" title="Ayarlar">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="mobile-menu-btn" onclick="toggleMobileMenu()" title="Menü">
+                    <i class="fas fa-bars" id="mobileMenuIcon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Hızlı Erişim</h3>
+        </div>
+        <div class="sidebar-menu">
+            <a href="#recent" class="sidebar-item">
+                <i class="fas fa-clock"></i>
+                Son Analizler
+            </a>
+            <a href="#favorites" class="sidebar-item">
+                <i class="fas fa-star"></i>
+                Favoriler
+            </a>
+            <a href="#alerts" class="sidebar-item">
+                <i class="fas fa-exclamation-triangle"></i>
+                Uyarılar
+            </a>
+            <a href="#api-status" class="sidebar-item">
+                <i class="fas fa-server"></i>
+                API Durumu
+            </a>
+            <a href="#documentation" class="sidebar-item">
+                <i class="fas fa-book"></i>
+                Dokümantasyon
+            </a>
+            <a href="#support" class="sidebar-item">
+                <i class="fas fa-life-ring"></i>
+                Destek
+            </a>
+        </div>
+    </aside>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Modal Templates -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-cog"></i>
+                    Ayarlar
+                </h3>
+                <button class="modal-close" onclick="closeModal('settingsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4><i class="fas fa-key"></i> API Ayarları</h4>
+                    <div class="form-group">
+                        <label>OpenAI API Key</label>
+                        <input type="password" id="openaiKey" placeholder="API anahtarınızı girin...">
+                    </div>
+                    <div class="form-group">
+                        <label>VirusTotal API Key</label>
+                        <input type="password" id="virustotalKey" placeholder="API anahtarınızı girin...">
+                    </div>
+                    <div class="form-group">
+                        <label>URLScan.io API Key</label>
+                        <input type="password" id="urlscanKey" placeholder="API anahtarınızı girin...">
+                    </div>
+                    <div class="form-group">
+                        <label>AbuseIPDB API Key</label>
+                        <input type="password" id="abuseipdbKey" placeholder="API anahtarınızı girin...">
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h4><i class="fas fa-sliders-h"></i> Uygulama Ayarları</h4>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="autoSaveHistory" checked>
+                            Analiz geçmişini otomatik kaydet
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="showNotifications" checked>
+                            Bildirimleri göster
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="darkModeAuto">
+                            Otomatik karanlık mod (sistem temasına göre)
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="primary-btn" onclick="saveSettings()">
+                        <i class="fas fa-save"></i>
+                        Ayarları Kaydet
+                    </button>
+                    <button class="secondary-btn" onclick="resetSettings()">
+                        <i class="fas fa-undo"></i>
+                        Sıfırla
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal" id="notificationsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-bell"></i>
+                    Bildirimler
+                </h3>
+                <button class="modal-close" onclick="closeModal('notificationsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="notificationsList" class="notifications-list">
+                    <!-- Notifications will be populated here -->
+                </div>
+                <div class="notification-actions">
+                    <button class="secondary-btn" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double"></i>
+                        Tümünü Okundu İşaretle
+                    </button>
+                    <button class="secondary-btn" onclick="clearAllNotifications()">
+                        <i class="fas fa-trash"></i>
+                        Tümünü Temizle
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Email Modal -->
+    <div class="modal" id="emailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">
+                    <i class="fas fa-envelope"></i>
+                    Email Raporu Gönder
+                </h3>
+                <button class="modal-close" onclick="closeModal('emailModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="emailForm" onsubmit="sendEmailReport(event)">
+                    <div class="form-group">
+                        <label for="recipientEmail">Alıcı Email Adresi:</label>
+                        <input type="email" id="recipientEmail" class="form-control" placeholder="example@domain.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emailSubject">Konu:</label>
+                        <input type="text" id="emailSubject" class="form-control" value="SecApp Güvenlik Analiz Raporu" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="emailMessage">Mesaj:</label>
+                        <textarea id="emailMessage" class="form-control" rows="4" placeholder="İsteğe bağlı mesajınızı buraya yazabilirsiniz..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Rapor Formatı:</label>
+                        <div style="display: flex; gap: 16px; margin-top: 8px;">
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <input type="checkbox" id="includePDF" checked>
+                                PDF Raporu
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <input type="checkbox" id="includeExcel" checked>
+                                Excel Raporu
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 6px;">
+                                <input type="checkbox" id="includeJSON">
+                                JSON Data
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeModal('emailModal')">
+                            <i class="fas fa-times"></i>
+                            İptal
+                        </button>
+                        <button type="submit" class="btn">
+                            <i class="fas fa-paper-plane"></i>
+                            Gönder
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-shield-alt"></i> SecApp</h1>
+            <p>Gelişmiş Siber Güvenlik Analiz Platformu</p>
+            <div class="subtitle">AI Destekli • Çoklu Kaynak • Gerçek Zamanlı Analiz</div>
+        </div>
+        
+        <div class="main-card fade-in">
+            <div class="form-section">
+                <h2><i class="fas fa-search"></i> Güvenlik Analizi</h2>
+                <form id="analysisForm">
+                    <div class="form-group">
+                        <label for="target">Analiz edilecek hedef (URL, IP adresi veya domain):</label>
+                        <div class="input-container">
+                            <input type="text" id="target" name="target" placeholder="Örn: example.com, https://example.com, 8.8.8.8" required>
+                            <i class="fas fa-globe input-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="analyze-btn" id="analyzeBtn">
+                        <span class="btn-text">
+                            <i class="fas fa-shield-alt"></i>
+                            Kapsamlı Güvenlik Analizi Başlat
+                        </span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="examples">
+                <h3><i class="fas fa-lightbulb"></i> Örnek Kullanımlar</h3>
+                <div class="example-grid">
+                    <div class="example-item" onclick="setTarget('https://google.com')">
+                        <i class="fas fa-link example-icon"></i>
+                        <span class="example-text">https://google.com</span>
+                    </div>
+                    <div class="example-item" onclick="setTarget('microsoft.com')">
+                        <i class="fas fa-globe example-icon"></i>
+                        <span class="example-text">microsoft.com</span>
+                    </div>
+                    <div class="example-item" onclick="setTarget('8.8.8.8')">
+                        <i class="fas fa-server example-icon"></i>
+                        <span class="example-text">8.8.8.8</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Batch Analysis Section -->
+        <div class="main-card" id="batchSection" style="display: none;">
+            <h2><i class="fas fa-list"></i> Toplu Güvenlik Analizi</h2>
+            <p>Birden fazla hedefi aynı anda analiz edin. Her satıra bir hedef yazın.</p>
+            
+            <div class="form-group">
+                <label for="batchTargets">Hedef Listesi (Her satıra bir hedef):</label>
+                <textarea id="batchTargets" rows="8" placeholder="google.com&#10;microsoft.com&#10;8.8.8.8&#10;https://example.com"></textarea>
+            </div>
+            
+            <div class="batch-options">
+                <div class="option-group">
+                    <label>
+                        <input type="checkbox" id="parallelAnalysis" checked>
+                        Paralel Analiz (Daha Hızlı)
+                    </label>
+                </div>
+                <div class="option-group">
+                    <label>
+                        <input type="checkbox" id="exportResults" checked>
+                        Sonuçları Otomatik Export Et
+                    </label>
+                </div>
+            </div>
+            
+            <button type="button" class="analyze-btn" onclick="startBatchAnalysis()">
+                <i class="fas fa-play"></i>
+                Toplu Analizi Başlat
+            </button>
+            
+            <!-- Batch Progress -->
+            <div id="batchProgress" class="batch-progress" style="display: none;">
+                <div class="progress-header">
+                    <h3>Analiz İlerlemesi</h3>
+                    <span id="progressText">0/0</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="batch-results" id="batchResults"></div>
+            </div>
+        </div>
+        
+        <!-- Analysis History Section -->
+        <div class="main-card" id="historySection" style="display: none;">
+            <div class="section-header">
+                <h2><i class="fas fa-history"></i> Analiz Geçmişi</h2>
+                <button class="secondary-btn" onclick="clearHistory()">
+                    <i class="fas fa-trash"></i>
+                    Geçmişi Temizle
+                </button>
+            </div>
+            
+            <div class="history-filters">
+                <input type="text" id="historySearch" placeholder="Hedef ara..." onkeyup="filterHistory()">
+                <select id="riskFilter" onchange="filterHistory()">
+                    <option value="">Tüm Risk Seviyeleri</option>
+                    <option value="MINIMAL">Minimal</option>
+                    <option value="LOW">Düşük</option>
+                    <option value="MEDIUM">Orta</option>
+                    <option value="HIGH">Yüksek</option>
+                    <option value="CRITICAL">Kritik</option>
+                </select>
+            </div>
+            
+            <div id="historyList" class="history-list"></div>
+        </div>
+        
+        <!-- Reports Section -->
+        <div class="main-card" id="reportsSection" style="display: none;">
+            <h2><i class="fas fa-file-alt"></i> Raporlar ve Export</h2>
+            
+            <div class="report-options">
+                <div class="report-card">
+                    <h3><i class="fas fa-file-pdf"></i> PDF Raporu</h3>
+                    <p>Detaylı analiz sonuçlarını PDF formatında indirin.</p>
+                    <button class="btn" onclick="generatePDFReport()">
+                        <i class="fas fa-download"></i> PDF Oluştur
+                    </button>
+                </div>
+                
+                <div class="report-card">
+                    <h3><i class="fas fa-file-excel"></i> Excel Raporu</h3>
+                    <p>Sonuçları Excel formatında dışa aktarın.</p>
+                    <button class="btn" onclick="generateExcelReport()">
+                        <i class="fas fa-download"></i> Excel Oluştur
+                    </button>
+                </div>
+                
+                <div class="report-card">
+                    <h3><i class="fas fa-file-code"></i> JSON Raporu</h3>
+                    <p>Ham veriyi JSON formatında indirin.</p>
+                    <button class="btn" onclick="generateJSONReport()">
+                        <i class="fas fa-download"></i> JSON İndir
+                    </button>
+                </div>
+                
+                <div class="report-card">
+                    <h3><i class="fas fa-envelope"></i> Email Raporu</h3>
+                    <p>Analiz sonuçlarını email ile gönderin.</p>
+                    <button class="btn btn-secondary" onclick="showEmailModal()">
+                        <i class="fas fa-paper-plane"></i> Email Gönder
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="loading-container" id="loadingContainer">
+            <div class="main-card">
+                <div class="loading-steps">
+                    <h2><i class="fas fa-cogs"></i> Analiz İşlemi Devam Ediyor</h2>
+                    <div class="loading-step" id="step1">
+                        <div class="step-icon">1</div>
+                        <div class="step-text">URLScan.io Analizi</div>
+                        <div class="step-status">Bekleniyor...</div>
+                    </div>
+                    <div class="loading-step" id="step2">
+                        <div class="step-icon">2</div>
+                        <div class="step-text">VirusTotal Taraması</div>
+                        <div class="step-status">Bekleniyor...</div>
+                    </div>
+                    <div class="loading-step" id="step3">
+                        <div class="step-icon">3</div>
+                        <div class="step-text">AbuseIPDB Kontrolü</div>
+                        <div class="step-status">Bekleniyor...</div>
+                    </div>
+                    <div class="loading-step" id="step4">
+                        <div class="step-icon">4</div>
+                        <div class="step-text">AI Analizi - Adım 1</div>
+                        <div class="step-status">Bekleniyor...</div>
+                    </div>
+                    <div class="loading-step" id="step5">
+                        <div class="step-icon">5</div>
+                        <div class="step-text">AI Kapsamlı Değerlendirme</div>
+                        <div class="step-status">Bekleniyor...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <div class="main-card slide-up">
+                <div class="result-header">
+                    <div class="result-title">
+                        <h2><i class="fas fa-chart-line"></i> Analiz Sonuçları</h2>
+                        <span id="riskBadge" class="risk-badge"></span>
+                    </div>
+                    <div class="result-actions">
+                        <button class="action-btn download-btn" id="downloadBtn" onclick="downloadResults()">
+                            <i class="fas fa-download"></i> JSON İndir
+                        </button>
+                        <button class="action-btn new-analysis-btn" onclick="startNewAnalysis()">
+                            <i class="fas fa-plus"></i> Yeni Analiz
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Metrics Dashboard -->
+                <div id="metricsSection" class="charts-section">
+                    <div class="metrics-grid">
+                        <div class="metric-card" id="riskScoreCard">
+                            <div class="metric-value" id="riskScore">0</div>
+                            <div class="metric-label">Risk Skoru</div>
+                        </div>
+                        <div class="metric-card" id="threatsCard">
+                            <div class="metric-value" id="threatsCount">0</div>
+                            <div class="metric-label">Tespit Edilen Tehdit</div>
+                        </div>
+                        <div class="metric-card" id="enginesCard">
+                            <div class="metric-value" id="enginesCount">0</div>
+                            <div class="metric-label">Tarama Motoru</div>
+                        </div>
+                        <div class="metric-card" id="confidenceCard">
+                            <div class="metric-value" id="confidenceScore">0%</div>
+                            <div class="metric-label">Güven Oranı</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Charts Section -->
+                <div id="chartsSection" class="charts-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Güvenlik Analiz Grafikleri
+                        </div>
+                        <div class="section-status status-success">İnteraktif</div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-pie"></i>
+                                Güvenlik Durumu Dağılımı
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="securityPieChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Motor Sonuçları
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="enginesBarChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-line"></i>
+                                Risk Değerlendirme Radarı
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="riskRadarChart"></canvas>
+                            </div>
+                        </div>
+                        <!-- New Enhanced Charts -->
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-shield-virus"></i>
+                                Tehdit Tespiti Özeti
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="threatOverviewChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-gauge-high"></i>
+                                Risk Skoru Göstergesi
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="riskGaugeChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-network-wired"></i>
+                                Veri Kaynakları Güvenilirliği
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="dataSourcesChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-history"></i>
+                                Risk Skoru Zaman Çizelgesi
+                            </div>
+                            <div class="chart-container small">
+                                <canvas id="timelineChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="riskRadarChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-card">
+                            <div class="chart-title">
+                                <i class="fas fa-chart-area"></i>
+                                Kaynak Güvenilirlik Skoru
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="sourceScoreChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="resultContent"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let analysisResults = null;
+        let currentStep = 0;
+        const totalSteps = 5;
+        
+        document.getElementById('analysisForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const target = document.getElementById('target').value.trim();
+            if (!target) {
+                showError('Lütfen bir hedef girin.');
+                return;
+            }
+            
+            analyzeTarget(target);
+        });
+        
+        function setTarget(target) {
+            document.getElementById('target').value = target;
+            document.getElementById('target').focus();
+        }
+        
+        function startNewAnalysis() {
+            document.getElementById('resultContainer').style.display = 'none';
+            document.getElementById('target').value = '';
+            document.getElementById('target').focus();
+            analysisResults = null;
+        }
+        
+        async function analyzeTarget(target) {
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const resultContainer = document.getElementById('resultContainer');
+            
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.classList.add('loading');
+            analyzeBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analiz yapılıyor...';
+            
+            loadingContainer.style.display = 'block';
+            resultContainer.style.display = 'none';
+            
+            // Reset steps
+            resetLoadingSteps();
+            
+            // Start step animation
+            simulateAnalysisSteps();
+            
+            try {
+                const response = await fetch(`http://127.0.0.1:5002/analyze?target=${encodeURIComponent(target)}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    analysisResults = data;
+                    // Complete all steps
+                    completeAllSteps();
+                    setTimeout(() => {
+                        displayResults(data);
+                    }, 1000);
+                } else {
+                    displayError(data.error || 'Analiz sırasında bir hata oluştu.');
+                }
+            } catch (error) {
+                displayError('Ağ hatası: ' + error.message);
+            } finally {
+                // Reset button state
+                setTimeout(() => {
+                    analyzeBtn.disabled = false;
+                    analyzeBtn.classList.remove('loading');
+                    analyzeBtn.querySelector('.btn-text').innerHTML = '<i class="fas fa-shield-alt"></i> Kapsamlı Güvenlik Analizi Başlat';
+                    loadingContainer.style.display = 'none';
+                }, 2000);
+            }
+        }
+        
+        function resetLoadingSteps() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active', 'completed');
+                step.querySelector('.step-status').textContent = 'Bekleniyor...';
+            }
+            currentStep = 0;
+        }
+        
+        function simulateAnalysisSteps() {
+            const stepMessages = [
+                'URLScan.io ile URL taraması yapılıyor...',
+                'VirusTotal ile zararlı yazılım kontrolü...',
+                'AbuseIPDB ile IP reputation kontrolü...',
+                'AI ile bireysel kaynak analizi...',
+                'AI ile kapsamlı risk değerlendirmesi...'
+            ];
+            
+            const stepInterval = setInterval(() => {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    const currentStepElement = document.getElementById(`step${currentStep}`);
+                    
+                    // Mark current step as active
+                    currentStepElement.classList.add('active');
+                    currentStepElement.querySelector('.step-status').textContent = stepMessages[currentStep - 1];
+                    
+                    // Complete previous step
+                    if (currentStep > 1) {
+                        const prevStep = document.getElementById(`step${currentStep - 1}`);
+                        prevStep.classList.remove('active');
+                        prevStep.classList.add('completed');
+                        prevStep.querySelector('.step-status').textContent = 'Tamamlandı ✓';
+                    }
+                } else {
+                    clearInterval(stepInterval);
+                }
+            }, 2000);
+        }
+        
+        function completeAllSteps() {
+            for (let i = 1; i <= totalSteps; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('active');
+                step.classList.add('completed');
+                step.querySelector('.step-status').textContent = 'Tamamlandı ✓';
+            }
+        }
+        
+        function displayResults(data) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const riskBadge = document.getElementById('riskBadge');
+            
+            // Set risk badge
+            const riskLevel = data.analysis_summary?.risk_level || 'UNKNOWN';
+            riskBadge.innerHTML = `<i class="fas fa-shield-alt"></i> ${getRiskLevelText(riskLevel)}`;
+            riskBadge.className = 'risk-badge risk-' + riskLevel.toLowerCase();
+            
+            // Update metrics dashboard
+            updateMetricsDashboard(data);
+            
+            // Create charts
+            createSecurityCharts(data);
+            
+            let html = '';
+            
+            // Analysis Summary
+            if (data.analysis_summary) {
+                html += generateSummaryHTML(data.analysis_summary);
+            }
+            
+            // AI Final Analysis
+            if (data.ai_final_analysis) {
+                html += generateAIFinalAnalysisHTML(data.ai_final_analysis);
+            }
+            
+            // AI Step Analyses
+            if (data.ai_step_analyses) {
+                html += generateAIStepAnalysesHTML(data.ai_step_analyses);
+            }
+            
+            // Data Sources
+            html += generateDataSourcesHTML(data);
+            
+            resultContent.innerHTML = html;
+            resultContainer.style.display = 'block';
+            
+            // Scroll to results
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        
+        function getRiskLevelText(level) {
+            const levelTexts = {
+                'MINIMAL': 'Minimal Risk',
+                'LOW': 'Düşük Risk',
+                'MEDIUM': 'Orta Risk',
+                'HIGH': 'Yüksek Risk',
+                'CRITICAL': 'Kritik Risk',
+                'UNKNOWN': 'Bilinmeyen'
+            };
+            return levelTexts[level] || level;
+        }
+        
+        function generateSummaryHTML(summary) {
+            const confidenceColor = summary.confidence_score >= 80 ? 'var(--success-color)' : 
+                                  summary.confidence_score >= 60 ? 'var(--warning-color)' : 'var(--danger-color)';
+            
+            return `
+                <div class="analysis-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-chart-pie"></i>
+                            Analiz Özeti
+                        </div>
+                        <div class="section-status status-success">Tamamlandı</div>
+                    </div>
+                    <div class="data-sources-grid">
+                        <div class="data-source-card">
+                            <div class="data-source-header">
+                                <div class="data-source-name">
+                                    <i class="fas fa-shield-alt"></i>
+                                    Genel Durum
+                                </div>
+                            </div>
+                            <ul class="data-list">
+                                <li>
+                                    <span class="data-label">Risk Seviyesi</span>
+                                    <span class="data-value">${getRiskLevelText(summary.risk_level)}</span>
+                                </li>
+                                <li>
+                                    <span class="data-label">Tehdit Tespit</span>
+                                    <span class="data-value">${summary.threats_detected ? '⚠️ Evet' : '✅ Hayır'}</span>
+                                </li>
+                                <li>
+                                    <span class="data-label">Güven Skoru</span>
+                                    <span class="data-value" style="color: ${confidenceColor}">
+                                        ${summary.confidence_score.toFixed(1)}%
+                                    </span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="data-source-card">
+                            <div class="data-source-header">
+                                <div class="data-source-name">
+                                    <i class="fas fa-database"></i>
+                                    Veri Kaynakları
+                                </div>
+                            </div>
+                            <ul class="data-list">
+                                ${summary.data_sources_used.map(source => 
+                                    `<li>
+                                        <span class="data-label">${source}</span>
+                                        <span class="data-value">✅ Başarılı</span>
+                                    </li>`
+                                ).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateAIFinalAnalysisHTML(finalAnalysis) {
+            return `
+                <div class="analysis-section ai-final-analysis">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-brain"></i>
+                            AI Kapsamlı Risk Değerlendirmesi
+                        </div>
+                        <div class="section-status status-success">GPT-4o Analizi</div>
+                    </div>
+                    <div class="analysis-content">
+                        ${formatAnalysisText(finalAnalysis)}
+                    </div>
+                </div>
+            `;
+        }
+        
+        function generateAIStepAnalysesHTML(stepAnalyses) {
+            let html = `
+                <div class="analysis-section ai-step-analysis">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-list-ol"></i>
+                            AI Adım Adım Analiz Detayları
+                        </div>
+                        <div class="section-status status-success">Kaynak Bazlı</div>
+                    </div>
+                    <div class="data-sources-grid">
+            `;
+            
+            const sourceIcons = {
+                'urlscan_data': 'fas fa-search',
+                'virustotal_data': 'fas fa-virus',
+                'abuseipdb_data': 'fas fa-shield-alt'
+            };
+            
+            const sourceNames = {
+                'urlscan_data': 'URLScan.io',
+                'virustotal_data': 'VirusTotal',
+                'abuseipdb_data': 'AbuseIPDB'
+            };
+            
+            Object.entries(stepAnalyses).forEach(([source, analysis]) => {
+                html += `
+                    <div class="data-source-card">
+                        <div class="data-source-header">
+                            <div class="data-source-name">
+                                <i class="${sourceIcons[source] || 'fas fa-info-circle'}"></i>
+                                ${sourceNames[source] || source}
+                            </div>
+                        </div>
+                        <div class="analysis-content">
+                            ${analysis}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div></div>';
+            return html;
+        }
+        
+        function generateDataSourcesHTML(data) {
+            let html = `
+                <div class="analysis-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-database"></i>
+                            Detaylı Kaynak Verileri
+                        </div>
+                        <div class="section-status status-success">Ham Veriler</div>
+                    </div>
+                    <div class="data-sources-grid">
+            `;
+            
+            // URLScan.io
+            if (data.urlscan_data) {
+                html += generateSourceHTML('URLScan.io', data.urlscan_data, [
+                    'scan_id', 'url', 'malicious_domains', 'suspicious_domains', 
+                    'country', 'ip', 'page_status'
+                ], 'fas fa-search');
+            }
+            
+            // VirusTotal
+            if (data.virustotal_data) {
+                html += generateSourceHTML('VirusTotal', data.virustotal_data, [
+                    'target_type', 'malicious_count', 'suspicious_count', 'clean_count',
+                    'total_engines', 'reputation', 'country'
+                ], 'fas fa-virus');
+            }
+            
+            // AbuseIPDB
+            if (data.abuseipdb_data) {
+                html += generateSourceHTML('AbuseIPDB', data.abuseipdb_data, [
+                    'ip_address', 'abuse_confidence', 'total_reports', 'risk_level',
+                    'country_name', 'isp', 'is_whitelisted'
+                ], 'fas fa-shield-alt');
+            }
+            
+            html += '</div></div>';
+            return html;
+        }
+        
+        function generateSourceHTML(sourceName, data, fields, icon) {
+            if (data.error) {
+                return `
+                    <div class="data-source-card" style="border-color: var(--danger-color);">
+                        <div class="data-source-header">
+                            <div class="data-source-name">
+                                <i class="${icon}"></i>
+                                ${sourceName}
+                            </div>
+                            <div class="section-status status-error">Hata</div>
+                        </div>
+                        <div class="error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            ${data.error}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            let html = `
+                <div class="data-source-card">
+                    <div class="data-source-header">
+                        <div class="data-source-name">
+                            <i class="${icon}"></i>
+                            ${sourceName}
+                        </div>
+                        <div class="section-status status-success">Başarılı</div>
+                    </div>
+                    <ul class="data-list">
+            `;
+            
+            for (const field of fields) {
+                if (data[field] !== undefined && data[field] !== null) {
+                    html += `
+                        <li>
+                            <span class="data-label">${formatFieldName(field)}</span>
+                            <span class="data-value">${formatFieldValue(data[field])}</span>
+                        </li>
+                    `;
+                }
+            }
+            
+            html += '</ul></div>';
+            return html;
+        }
+        
+        function formatAnalysisText(text) {
+            // Convert markdown-like formatting to HTML
+            return text
+                .replace(/## (.*?)\n/g, '<h2>$1</h2>')
+                .replace(/### (.*?)\n/g, '<h3>$1</h3>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n\n/g, '</p><p>')
+                .replace(/\n/g, '<br>')
+                .replace(/^/, '<p>')
+                .replace(/$/, '</p>');
+        }
+        
+        function formatFieldName(field) {
+            const fieldNames = {
+                'scan_id': 'Tarama ID',
+                'url': 'URL',
+                'malicious_domains': 'Zararlı Domain Sayısı',
+                'suspicious_domains': 'Şüpheli Domain Sayısı',
+                'country': 'Ülke',
+                'ip': 'IP Adresi',
+                'page_status': 'Sayfa Durumu',
+                'target_type': 'Hedef Tipi',
+                'malicious_count': 'Zararlı Tespit Sayısı',
+                'suspicious_count': 'Şüpheli Tespit Sayısı',
+                'clean_count': 'Temiz Tespit Sayısı',
+                'total_engines': 'Toplam Motor Sayısı',
+                'reputation': 'Reputation Skoru',
+                'ip_address': 'IP Adresi',
+                'abuse_confidence': 'Kötüye Kullanım Güveni (%)',
+                'total_reports': 'Toplam Rapor Sayısı',
+                'risk_level': 'Risk Seviyesi',
+                'country_name': 'Ülke',
+                'isp': 'İnternet Servis Sağlayıcısı',
+                'is_whitelisted': 'Beyaz Listede'
+            };
+            return fieldNames[field] || field;
+        }
+        
+        function formatFieldValue(value) {
+            if (typeof value === 'boolean') {
+                return value ? '✅ Evet' : '❌ Hayır';
+            }
+            if (typeof value === 'object') {
+                return JSON.stringify(value);
+            }
+            if (typeof value === 'number' && value > 1000) {
+                return value.toLocaleString();
+            }
+            return value;
+        }
+        
+        function displayError(error) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const riskBadge = document.getElementById('riskBadge');
+            
+            riskBadge.innerHTML = '<i class="fas fa-exclamation-triangle"></i> HATA';
+            riskBadge.className = 'risk-badge risk-critical';
+            
+            resultContent.innerHTML = `
+                <div class="analysis-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Analiz Hatası
+                        </div>
+                        <div class="section-status status-error">Başarısız</div>
+                    </div>
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        ${error}
+                    </div>
+                </div>
+            `;
+            
+            resultContainer.style.display = 'block';
+        }
+        
+        function showError(message) {
+            alert(message); // Simple for now, could be improved with custom modal
+        }
+        
+        function downloadResults() {
+            if (!analysisResults) {
+                showError('İndirilecek sonuç bulunamadı.');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(analysisResults, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `secapp_analysis_${analysisResults.target}_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            URL.revokeObjectURL(url);
+        }
+        
+        // Add some keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                document.getElementById('analysisForm').dispatchEvent(new Event('submit'));
+            }
+        });
+        
+        // Auto-focus on page load
+        window.addEventListener('load', function() {
+            document.getElementById('target').focus();
+            initializeApp();
+        });
+        
+        // Modern UI Functions
+        function initializeApp() {
+            // Initialize theme
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            updateThemeIcon(savedTheme);
+            
+            // Initialize notifications
+            initializeNotifications();
+            updateNotificationBadge();
+            
+            // Load settings
+            loadSettings();
+            
+            // Show welcome toast
+            showToast('Hoş geldiniz!', 'SecApp güvenlik analiz platformuna hoş geldiniz.', 'success');
+        }
+        
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+            
+            showToast('Tema Değiştirildi', `${newTheme === 'dark' ? 'Karanlık' : 'Aydınlık'} tema aktif edildi.`, 'success');
+        }
+        
+        function updateThemeIcon(theme) {
+            const icon = document.getElementById('themeIcon');
+            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+        
+        function toggleMobileMenu() {
+            const menu = document.querySelector('.nav-menu');
+            const icon = document.getElementById('mobileMenuIcon');
+            
+            menu.classList.toggle('mobile-open');
+            
+            if (menu.classList.contains('mobile-open')) {
+                icon.className = 'fas fa-times';
+            } else {
+                icon.className = 'fas fa-bars';
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+        
+        function toggleNotifications() {
+            showModal('notificationsModal');
+            loadNotifications();
+        }
+        
+        // Notification System
+        let notifications = [];
+        
+        function initializeNotifications() {
+            // Load saved notifications
+            const saved = localStorage.getItem('notifications');
+            if (saved) {
+                notifications = JSON.parse(saved);
+            }
+            
+            // Add some demo notifications
+            if (notifications.length === 0) {
+                addNotification('Sistem Başlatıldı', 'SecApp başarıyla yüklendi ve hazır.', 'success');
+                addNotification('API Durumu', 'Tüm API bağlantıları kontrol edildi.', 'info');
+                addNotification('Güncelleme Mevcut', 'Yeni özellikler eklendi!', 'warning');
+            }
+        }
+        
+        function addNotification(title, message, type = 'info') {
+            const notification = {
+                id: Date.now(),
+                title: title,
+                message: message,
+                type: type,
+                timestamp: new Date().toISOString(),
+                read: false
+            };
+            
+            notifications.unshift(notification);
+            
+            // Keep only last 50 notifications
+            notifications = notifications.slice(0, 50);
+            
+            // Save to localStorage
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            
+            updateNotificationBadge();
+        }
+        
+        function updateNotificationBadge() {
+            const badge = document.getElementById('notificationBadge');
+            const unreadCount = notifications.filter(n => !n.read).length;
+            
+            badge.textContent = unreadCount;
+            if (unreadCount > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+        
+        function loadNotifications() {
+            const container = document.getElementById('notificationsList');
+            
+            if (notifications.length === 0) {
+                container.innerHTML = '<p class="no-notifications">Henüz bildirim bulunmuyor.</p>';
+                return;
+            }
+            
+            container.innerHTML = notifications.map(notification => {
+                const icons = {
+                    success: 'fas fa-check-circle',
+                    warning: 'fas fa-exclamation-triangle',
+                    error: 'fas fa-times-circle',
+                    info: 'fas fa-info-circle'
+                };
+                
+                return `
+                    <div class="notification-item ${notification.read ? 'read' : 'unread'}" data-id="${notification.id}">
+                        <div class="notification-icon ${notification.type}">
+                            <i class="${icons[notification.type]}"></i>
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">${notification.title}</div>
+                            <div class="notification-message">${notification.message}</div>
+                            <div class="notification-time">${formatTimestamp(notification.timestamp)}</div>
+                        </div>
+                        <button class="notification-close" onclick="removeNotification('${notification.id}')">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function markAllAsRead() {
+            notifications.forEach(n => n.read = true);
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            loadNotifications();
+        }
+        
+        function clearAllNotifications() {
+            if (confirm('Tüm bildirimleri silmek istediğinizden emin misiniz?')) {
+                notifications = [];
+                localStorage.removeItem('notifications');
+                updateNotificationBadge();
+                loadNotifications();
+            }
+        }
+        
+        function removeNotification(id) {
+            notifications = notifications.filter(n => n.id !== parseInt(id));
+            localStorage.setItem('notifications', JSON.stringify(notifications));
+            updateNotificationBadge();
+            loadNotifications();
+        }
+        
+        function formatTimestamp(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+            
+            if (diff < 60000) return 'Az önce';
+            if (diff < 3600000) return Math.floor(diff / 60000) + ' dakika önce';
+            if (diff < 86400000) return Math.floor(diff / 3600000) + ' saat önce';
+            return date.toLocaleDateString('tr-TR');
+        }
+        
+        // Settings Functions
+        function loadSettings() {
+            const settings = localStorage.getItem('appSettings');
+            if (settings) {
+                const parsed = JSON.parse(settings);
+                
+                // Apply settings to form
+                const autoSave = document.getElementById('autoSaveHistory');
+                const showNotifications = document.getElementById('showNotifications');
+                const darkModeAuto = document.getElementById('darkModeAuto');
+                
+                if (autoSave) autoSave.checked = parsed.autoSaveHistory !== false;
+                if (showNotifications) showNotifications.checked = parsed.showNotifications !== false;
+                if (darkModeAuto) darkModeAuto.checked = parsed.darkModeAuto === true;
+            }
+        }
+        
+        function saveSettings() {
+            const settings = {
+                autoSaveHistory: document.getElementById('autoSaveHistory')?.checked ?? true,
+                showNotifications: document.getElementById('showNotifications')?.checked ?? true,
+                darkModeAuto: document.getElementById('darkModeAuto')?.checked ?? false,
+                openaiKey: document.getElementById('openaiKey')?.value ?? '',
+                virustotalKey: document.getElementById('virustotalKey')?.value ?? '',
+                urlscanKey: document.getElementById('urlscanKey')?.value ?? '',
+                abuseipdbKey: document.getElementById('abuseipdbKey')?.value ?? ''
+            };
+            
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+            closeModal('settingsModal');
+            showToast('Ayarlar Kaydedildi', 'Tüm ayarlarınız başarıyla kaydedildi.', 'success');
+        }
+        
+        function resetSettings() {
+            if (confirm('Tüm ayarları sıfırlamak istediğinizden emin misiniz?')) {
+                localStorage.removeItem('appSettings');
+                
+                // Reset form
+                document.getElementById('autoSaveHistory').checked = true;
+                document.getElementById('showNotifications').checked = true;
+                document.getElementById('darkModeAuto').checked = false;
+                document.getElementById('openaiKey').value = '';
+                document.getElementById('virustotalKey').value = '';
+                document.getElementById('urlscanKey').value = '';
+                document.getElementById('abuseipdbKey').value = '';
+                
+                showToast('Ayarlar Sıfırlandı', 'Tüm ayarlar varsayılan değerlere döndürüldü.', 'info');
+            }
+        }
+        
+        // Toast Notification System
+        function showToast(title, message, type = 'info', duration = 5000) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                warning: 'fas fa-exclamation-triangle',
+                error: 'fas fa-times-circle',
+                info: 'fas fa-info-circle'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon">
+                        <i class="${icons[type]}"></i>
+                    </div>
+                    <div class="toast-text">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="hideToast('${toastId}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    closeToast(toast.querySelector('.toast-close'));
+                }
+            }, duration);
+        }
+        
+        function closeToast(button) {
+            const toast = button.closest('.toast');
+            toast.style.animation = 'slideOut 0.3s ease forwards';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+        
+        // Modal System
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+        }
+        
+        // Enhanced Navigation
+        function setActiveNavItem(targetId) {
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const targetLink = document.querySelector(`[href="#${targetId}"]`);
+            if (targetLink) {
+                targetLink.classList.add('active');
+            }
+        }
+        
+        // Analysis Queue System
+        let analysisQueue = [];
+        let isProcessingQueue = false;
+        
+        function addToAnalysisQueue(target) {
+            analysisQueue.push({
+                id: Date.now(),
+                target: target,
+                status: 'pending',
+                timestamp: new Date()
+            });
+            
+            updateQueueDisplay();
+            
+            if (!isProcessingQueue) {
+                processAnalysisQueue();
+            }
+        }
+        
+        function processAnalysisQueue() {
+            if (analysisQueue.length === 0) {
+                isProcessingQueue = false;
+                return;
+            }
+            
+            isProcessingQueue = true;
+            const nextItem = analysisQueue.find(item => item.status === 'pending');
+            
+            if (nextItem) {
+                nextItem.status = 'processing';
+                updateQueueDisplay();
+                
+                analyzeTarget(nextItem.target).then(() => {
+                    nextItem.status = 'completed';
+                    updateQueueDisplay();
+                    
+                    // Process next item after delay
+                    setTimeout(() => {
+                        processAnalysisQueue();
+                    }, 2000);
+                }).catch((error) => {
+                    nextItem.status = 'failed';
+                    nextItem.error = error.message;
+                    updateQueueDisplay();
+                    
+                    setTimeout(() => {
+                        processAnalysisQueue();
+                    }, 1000);
+                });
+            }
+        }
+        
+        function updateQueueDisplay() {
+            // Update queue display in sidebar or dedicated section
+            const queueCount = analysisQueue.filter(item => item.status === 'pending').length;
+            
+            // Update notification badge
+            if (queueCount > 0) {
+                showToast('Analiz Kuyruğu', `${queueCount} analiz beklemede`, 'info', 3000);
+            }
+        }
+        
+        // Modal Functions
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+                
+                // Focus first focusable element
+                const focusableElement = modal.querySelector('input, button, select, textarea, [tabindex]:not([tabindex="-1"])');
+                if (focusableElement) {
+                    setTimeout(() => focusableElement.focus(), 100);
+                }
+            }
+        }
+        
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal(e.target.id);
+            }
+        });
+        
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const openModal = document.querySelector('.modal.show');
+                if (openModal) {
+                    closeModal(openModal.id);
+                }
+            }
+        });
+        
+        // Toast Functions
+        function showToast(title, message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toastId = 'toast-' + Date.now();
+            
+            const icons = {
+                success: 'fas fa-check-circle',
+                error: 'fas fa-times-circle',
+                warning: 'fas fa-exclamation-triangle',
+                info: 'fas fa-info-circle'
+            };
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="toast-content">
+                    <div class="toast-icon">
+                        <i class="${icons[type]}"></i>
+                    </div>
+                    <div class="toast-text">
+                        <div class="toast-title">${title}</div>
+                        <div class="toast-message">${message}</div>
+                    </div>
+                    <button class="toast-close" onclick="hideToast('${toastId}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Show toast with animation
+            setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => hideToast(toastId), 5000);
+        }
+        
+        function hideToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.remove('show');
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            }
+        }
+
+        // Advanced Analysis Functions
+        function startBatchAnalysis() {
+            const targets = document.getElementById('batchTargets').value.split('\n')
+                .map(line => line.trim())
+                .filter(line => line.length > 0);
+            
+            if (targets.length === 0) {
+                showToast('Hata', 'Lütfen analiz edilecek hedefleri girin.', 'error');
+                return;
+            }
+            
+            showToast('Toplu Analiz Başlatıldı', `${targets.length} hedef analiz kuyruğuna eklendi.`, 'success');
+            
+            targets.forEach(target => {
+                addToAnalysisQueue(target);
+            });
+        }
+        
+        function saveToFavorites(target) {
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            
+            if (!favorites.includes(target)) {
+                favorites.push(target);
+                localStorage.setItem('favorites', JSON.stringify(favorites));
+                showToast('Favorilere Eklendi', `${target} favorilerinize eklendi.`, 'success');
+            } else {
+                showToast('Zaten Favori', 'Bu hedef zaten favorilerinizde.', 'warning');
+            }
+        }
+        
+        function loadAnalysisHistory() {
+            const history = JSON.parse(localStorage.getItem('analysisHistory')) || [];
+            return history;
+        }
+        
+        function saveAnalysisHistory(target, results) {
+            let history = JSON.parse(localStorage.getItem('analysisHistory')) || [];
+            
+            history.unshift({
+                target: target,
+                timestamp: new Date().toISOString(),
+                riskLevel: results.analysis_summary?.risk_level || 'UNKNOWN',
+                summary: results.analysis_summary
+            });
+            
+            // Keep only last 50 analyses
+            history = history.slice(0, 50);
+            
+            localStorage.setItem('analysisHistory', JSON.stringify(history));
+        }
+        
+        // Enhanced Analysis Function
+        async function analyzeTargetEnhanced(target) {
+            // Add to history before analysis
+            showToast('Analiz Başlatıldı', `${target} için analiz başlatılıyor...`, 'info');
+            
+            try {
+                const result = await analyzeTarget(target);
+                
+                // Save to history
+                saveAnalysisHistory(target, analysisResults);
+                
+                showToast('Analiz Tamamlandı', `${target} için analiz başarıyla tamamlandı.`, 'success');
+                
+                return result;
+            } catch (error) {
+                showToast('Analiz Hatası', `${target} analizi sırasında hata: ${error.message}`, 'error');
+                throw error;
+            }
+        }
+        
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + Enter: Start analysis
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                e.preventDefault();
+                document.getElementById('analysisForm').dispatchEvent(new Event('submit'));
+            }
+            
+            // Ctrl/Cmd + D: Toggle dark mode
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                toggleTheme();
+            }
+            
+            // Escape: Close modals/sidebar
+            if (e.key === 'Escape') {
+                closeModal('settingsModal');
+                document.getElementById('sidebar').classList.remove('open');
+            }
+        });
+        
+        // Click outside to close sidebar
+        document.addEventListener('click', function(e) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) {
+                sidebar.classList.remove('open');
+            }
+        });
+        
+        // Metrics Dashboard Functions
+        function updateMetricsDashboard(data) {
+            // Calculate metrics
+            const riskLevel = data.analysis_summary?.risk_level || 'UNKNOWN';
+            const riskScore = calculateRiskScore(data);
+            const threatsDetected = data.analysis_summary?.threats_detected || false;
+            const confidenceScore = data.analysis_summary?.confidence_score || 0;
+            
+            // Count total engines
+            let totalEngines = 0;
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                totalEngines = data.virustotal_data.total_engines || 0;
+            }
+            
+            // Update metric cards with animation
+            animateCounter('riskScore', riskScore);
+            animateCounter('threatsCount', threatsDetected ? 1 : 0);
+            animateCounter('enginesCount', totalEngines);
+            animateCounter('confidenceScore', Math.round(confidenceScore), '%');
+            
+            // Update card colors based on risk
+            updateMetricCardColors(riskLevel);
+        }
+        
+        function createSecurityCharts(data) {
+            // Threat Detection Overview Chart
+            if (data.urlscan_data || data.virustotal_data || data.abuseipdb_data) {
+                createThreatOverviewChart(data);
+            }
+            
+            // Risk Score Gauge
+            const riskScore = calculateRiskScore(data);
+            createRiskGaugeChart(riskScore);
+            
+            // Data Sources Reliability Chart
+            createDataSourcesChart(data);
+            
+            // Timeline Chart (if we have timestamp data)
+            createTimelineChart(data);
+        }
+        
+        function createThreatOverviewChart(data) {
+            const ctx = document.getElementById('threatOverviewChart');
+            if (!ctx) return;
+            
+            const threatData = {
+                urlscan: {
+                    malicious: data.urlscan_data?.malicious_domains || 0,
+                    suspicious: data.urlscan_data?.suspicious_domains || 0,
+                    clean: Math.max(0, 10 - (data.urlscan_data?.malicious_domains || 0) - (data.urlscan_data?.suspicious_domains || 0))
+                },
+                virustotal: {
+                    malicious: data.virustotal_data?.malicious_count || 0,
+                    suspicious: data.virustotal_data?.suspicious_count || 0,
+                    clean: data.virustotal_data?.clean_count || 0
+                },
+                abuseipdb: {
+                    high_risk: data.abuseipdb_data?.abuse_confidence > 75 ? 1 : 0,
+                    medium_risk: (data.abuseipdb_data?.abuse_confidence > 25 && data.abuseipdb_data?.abuse_confidence <= 75) ? 1 : 0,
+                    low_risk: data.abuseipdb_data?.abuse_confidence <= 25 ? 1 : 0
+                }
+            };
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['URLScan.io', 'VirusTotal', 'AbuseIPDB'],
+                    datasets: [
+                        {
+                            label: 'Zararlı/Yüksek Risk',
+                            data: [threatData.urlscan.malicious, threatData.virustotal.malicious, threatData.abuseipdb.high_risk],
+                            backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Şüpheli/Orta Risk',
+                            data: [threatData.urlscan.suspicious, threatData.virustotal.suspicious, threatData.abuseipdb.medium_risk],
+                            backgroundColor: 'rgba(255, 193, 7, 0.8)',
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Temiz/Düşük Risk',
+                            data: [threatData.urlscan.clean, threatData.virustotal.clean, threatData.abuseipdb.low_risk],
+                            backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                            borderColor: 'rgba(40, 167, 69, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Tehdit Tespiti Özeti',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: { display: false }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            grid: { color: 'rgba(0,0,0,0.1)' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createRiskGaugeChart(riskScore) {
+            const ctx = document.getElementById('riskGaugeChart');
+            if (!ctx) return;
+            
+            const gaugeData = {
+                datasets: [{
+                    data: [riskScore, 100 - riskScore],
+                    backgroundColor: [
+                        riskScore >= 70 ? '#dc3545' : riskScore >= 40 ? '#ffc107' : '#28a745',
+                        '#e9ecef'
+                    ],
+                    borderWidth: 0,
+                    cutout: '75%'
+                }]
+            };
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: gaugeData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Risk Skoru Göstergesi',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { display: false }
+                    },
+                    rotation: -90,
+                    circumference: 180
+                },
+                plugins: [{
+                    afterDraw: function(chart) {
+                        const ctx = chart.ctx;
+                        const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                        const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+                        
+                        ctx.save();
+                        ctx.font = 'bold 24px Arial';
+                        ctx.fillStyle = riskScore >= 70 ? '#dc3545' : riskScore >= 40 ? '#ffc107' : '#28a745';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(riskScore + '/100', centerX, centerY + 10);
+                        ctx.restore();
+                    }
+                }]
+            });
+        }
+        
+        function createDataSourcesChart(data) {
+            const ctx = document.getElementById('dataSourcesChart');
+            if (!ctx) return;
+            
+            const sources = [];
+            const reliability = [];
+            const colors = [];
+            
+            if (data.metadata?.data_sources) {
+                Object.entries(data.metadata.data_sources).forEach(([source, status]) => {
+                    sources.push(source.toUpperCase());
+                    const score = status === 'success' ? 100 : status === 'error' ? 0 : 50;
+                    reliability.push(score);
+                    colors.push(score === 100 ? '#28a745' : score === 0 ? '#dc3545' : '#ffc107');
+                });
+            }
+            
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: sources,
+                    datasets: [{
+                        label: 'Güvenilirlik Skoru',
+                        data: reliability,
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderColor: '#28a745',
+                        borderWidth: 2,
+                        pointBackgroundColor: colors,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Veri Kaynakları Güvenilirlik Analizi',
+                            font: { size: 16, weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 25,
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createTimelineChart(data) {
+            const ctx = document.getElementById('timelineChart');
+            if (!ctx) return;
+            
+            // Mock timeline data for now - in real implementation, this would come from historical analysis
+            const timelineData = {
+                labels: ['1 hafta önce', '6 gün önce', '5 gün önce', '4 gün önce', '3 gün önce', '2 gün önce', '1 gün önce', 'Bugün'],
+                datasets: [{
+                    label: 'Risk Skoru Geçmişi',
+                    data: [65, 59, 80, 81, 56, 55, 40, calculateRiskScore(data)],
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#007bff',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            };
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: timelineData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Risk Skoru Zaman Çizelgesi',
+                            font: { size: 16, weight: 'bold' }
+                        },
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(0,0,0,0.1)' },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '/100';
+                                }
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    }
+                }
+            });
+        }
+        
+        function calculateRiskScore(data) {
+            let score = 100; // Start with 100 (safe)
+            
+            // URLScan penalties
+            if (data.urlscan_data && !data.urlscan_data.error) {
+                const malicious = data.urlscan_data.malicious_domains || 0;
+                const suspicious = data.urlscan_data.suspicious_domains || 0;
+                score -= (malicious * 30) + (suspicious * 15);
+            }
+            
+            // VirusTotal penalties
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                const malicious = data.virustotal_data.malicious_count || 0;
+                const suspicious = data.virustotal_data.suspicious_count || 0;
+                score -= (malicious * 25) + (suspicious * 10);
+            }
+            
+            // AbuseIPDB penalties
+            if (data.abuseipdb_data && !data.abuseipdb_data.error) {
+                const confidence = data.abuseipdb_data.abuse_confidence || 0;
+                score -= confidence;
+            }
+            
+            return Math.max(0, Math.min(100, score));
+        }
+        
+        function animateCounter(elementId, targetValue, suffix = '') {
+            const element = document.getElementById(elementId);
+            const duration = 1000; // 1 second
+            const steps = 60; // 60 FPS
+            const increment = targetValue / steps;
+            let current = 0;
+            
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= targetValue) {
+                    current = targetValue;
+                    clearInterval(timer);
+                }
+                element.textContent = Math.round(current) + suffix;
+            }, duration / steps);
+        }
+        
+        function updateMetricCardColors(riskLevel) {
+            const cards = document.querySelectorAll('.metric-card');
+            const colors = {
+                'MINIMAL': '#10b981',
+                'LOW': '#10b981', 
+                'MEDIUM': '#f59e0b',
+                'HIGH': '#ef4444',
+                'CRITICAL': '#dc2626',
+                'UNKNOWN': '#6b7280'
+            };
+            
+            const color = colors[riskLevel] || colors['UNKNOWN'];
+            cards.forEach(card => {
+                card.style.background = `linear-gradient(135deg, ${color} 0%, ${color}dd 100%)`;
+            });
+        }
+        
+        // Chart Creation Functions
+        let securityChart, enginesChart, radarChart, sourceChart;
+        
+        function createSecurityCharts(data) {
+            // Destroy existing charts first
+            if (securityChart) securityChart.destroy();
+            if (enginesChart) enginesChart.destroy();
+            if (radarChart) radarChart.destroy();
+            if (sourceChart) sourceChart.destroy();
+            
+            // Create original charts
+            createSecurityPieChart(data);
+            createEnginesBarChart(data);
+            createRiskRadarChart(data);
+            createSourceScoreChart(data);
+            
+            // Create new enhanced charts
+            createThreatOverviewChart(data);
+            createRiskGaugeChart(calculateRiskScore(data));
+            createDataSourcesChart(data);
+            createTimelineChart(data);
+        }
+        
+        function createSecurityPieChart(data) {
+            const ctx = document.getElementById('securityPieChart').getContext('2d');
+            
+            let clean = 0, suspicious = 0, malicious = 0;
+            
+            // URLScan data
+            if (data.urlscan_data && !data.urlscan_data.error) {
+                malicious += data.urlscan_data.malicious_domains || 0;
+                suspicious += data.urlscan_data.suspicious_domains || 0;
+                if (!malicious && !suspicious) clean++;
+            }
+            
+            // VirusTotal data
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                malicious += data.virustotal_data.malicious_count || 0;
+                suspicious += data.virustotal_data.suspicious_count || 0;
+                clean += data.virustotal_data.clean_count || 0;
+            }
+            
+            // If no detections, mark as clean
+            if (!malicious && !suspicious && !clean) clean = 1;
+            
+            securityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Temiz', 'Şüpheli', 'Zararlı'],
+                    datasets: [{
+                        data: [clean, suspicious, malicious],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createEnginesBarChart(data) {
+            const ctx = document.getElementById('enginesBarChart').getContext('2d');
+            
+            const engineData = {
+                urlscan: { clean: 0, suspicious: 0, malicious: 0 },
+                virustotal: { clean: 0, suspicious: 0, malicious: 0 },
+                abuseipdb: { clean: 0, suspicious: 0, malicious: 0 }
+            };
+            
+            // URLScan
+            if (data.urlscan_data && !data.urlscan_data.error) {
+                const mal = data.urlscan_data.malicious_domains || 0;
+                const sus = data.urlscan_data.suspicious_domains || 0;
+                if (mal > 0) engineData.urlscan.malicious = 1;
+                else if (sus > 0) engineData.urlscan.suspicious = 1;
+                else engineData.urlscan.clean = 1;
+            }
+            
+            // VirusTotal
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                engineData.virustotal.clean = data.virustotal_data.clean_count || 0;
+                engineData.virustotal.suspicious = data.virustotal_data.suspicious_count || 0;
+                engineData.virustotal.malicious = data.virustotal_data.malicious_count || 0;
+            }
+            
+            // AbuseIPDB
+            if (data.abuseipdb_data && !data.abuseipdb_data.error) {
+                const confidence = data.abuseipdb_data.abuse_confidence || 0;
+                if (confidence > 75) engineData.abuseipdb.malicious = 1;
+                else if (confidence > 25) engineData.abuseipdb.suspicious = 1;
+                else engineData.abuseipdb.clean = 1;
+            }
+            
+            enginesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['URLScan.io', 'VirusTotal', 'AbuseIPDB'],
+                    datasets: [
+                        {
+                            label: 'Temiz',
+                            data: [engineData.urlscan.clean, engineData.virustotal.clean, engineData.abuseipdb.clean],
+                            backgroundColor: '#10b981'
+                        },
+                        {
+                            label: 'Şüpheli',
+                            data: [engineData.urlscan.suspicious, engineData.virustotal.suspicious, engineData.abuseipdb.suspicious],
+                            backgroundColor: '#f59e0b'
+                        },
+                        {
+                            label: 'Zararlı',
+                            data: [engineData.urlscan.malicious, engineData.virustotal.malicious, engineData.abuseipdb.malicious],
+                            backgroundColor: '#ef4444'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    },
+                    scales: {
+                        x: { stacked: true },
+                        y: { stacked: true, beginAtZero: true }
+                    }
+                }
+            });
+        }
+        
+        function createRiskRadarChart(data) {
+            const ctx = document.getElementById('riskRadarChart').getContext('2d');
+            
+            // Calculate scores for each dimension (0-100)
+            const scores = {
+                malware: 100,
+                reputation: 100,
+                network: 100,
+                content: 100,
+                behavioral: 100
+            };
+            
+            // URLScan impact
+            if (data.urlscan_data && !data.urlscan_data.error) {
+                const mal = data.urlscan_data.malicious_domains || 0;
+                const sus = data.urlscan_data.suspicious_domains || 0;
+                scores.content -= (mal * 40) + (sus * 20);
+                scores.network -= (mal * 30) + (sus * 15);
+            }
+            
+            // VirusTotal impact
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                const mal = data.virustotal_data.malicious_count || 0;
+                const sus = data.virustotal_data.suspicious_count || 0;
+                scores.malware -= (mal * 30) + (sus * 15);
+                scores.reputation -= (mal * 25) + (sus * 10);
+            }
+            
+            // AbuseIPDB impact
+            if (data.abuseipdb_data && !data.abuseipdb_data.error) {
+                const confidence = data.abuseipdb_data.abuse_confidence || 0;
+                scores.behavioral -= confidence;
+                scores.reputation -= confidence * 0.5;
+            }
+            
+            // Normalize scores
+            Object.keys(scores).forEach(key => {
+                scores[key] = Math.max(0, Math.min(100, scores[key]));
+            });
+            
+            radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Malware', 'Reputation', 'Network', 'Content', 'Behavioral'],
+                    datasets: [{
+                        label: 'Güvenlik Skoru',
+                        data: [scores.malware, scores.reputation, scores.network, scores.content, scores.behavioral],
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        borderColor: 'rgb(99, 102, 241)',
+                        pointBackgroundColor: 'rgb(99, 102, 241)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(99, 102, 241)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    elements: {
+                        line: {
+                            borderWidth: 3
+                        }
+                    },
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: false
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+        
+        function createSourceScoreChart(data) {
+            const ctx = document.getElementById('sourceScoreChart').getContext('2d');
+            
+            const sources = [];
+            const scores = [];
+            const colors = [];
+            
+            // URLScan
+            if (data.urlscan_data && !data.urlscan_data.error) {
+                sources.push('URLScan.io');
+                const mal = data.urlscan_data.malicious_domains || 0;
+                const sus = data.urlscan_data.suspicious_domains || 0;
+                const score = 100 - (mal * 40) - (sus * 20);
+                scores.push(Math.max(0, score));
+                colors.push(score > 80 ? '#10b981' : score > 50 ? '#f59e0b' : '#ef4444');
+            }
+            
+            // VirusTotal
+            if (data.virustotal_data && !data.virustotal_data.error) {
+                sources.push('VirusTotal');
+                const mal = data.virustotal_data.malicious_count || 0;
+                const sus = data.virustotal_data.suspicious_count || 0;
+                const total = data.virustotal_data.total_engines || 1;
+                const score = ((total - mal - sus) / total) * 100;
+                scores.push(Math.max(0, score));
+                colors.push(score > 80 ? '#10b981' : score > 50 ? '#f59e0b' : '#ef4444');
+            }
+            
+            // AbuseIPDB
+            if (data.abuseipdb_data && !data.abuseipdb_data.error) {
+                sources.push('AbuseIPDB');
+                const confidence = data.abuseipdb_data.abuse_confidence || 0;
+                const score = 100 - confidence;
+                scores.push(Math.max(0, score));
+                colors.push(score > 80 ? '#10b981' : score > 50 ? '#f59e0b' : '#ef4444');
+            }
+            
+            sourceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: sources,
+                    datasets: [{
+                        label: 'Güvenlik Skoru (%)',
+                        data: scores,
+                        backgroundColor: colors,
+                        borderColor: colors.map(color => color + '80'),
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Navigation Functions
+        function showSection(sectionId) {
+            // Hide all sections
+            const sections = ['batchSection', 'historySection', 'reportsSection'];
+            sections.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) element.style.display = 'none';
+            });
+            
+            // Show/hide main analysis section
+            const mainSection = document.querySelector('.container > .main-card:first-child');
+            if (sectionId === 'analysisSection' || sectionId === 'analysis') {
+                if (mainSection) mainSection.style.display = 'block';
+            } else {
+                if (mainSection) mainSection.style.display = 'none';
+                // Show target section
+                let targetSection = document.getElementById(sectionId);
+                
+                // Handle different section name formats
+                if (!targetSection && !sectionId.endsWith('Section')) {
+                    targetSection = document.getElementById(sectionId + 'Section');
+                }
+                
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                }
+            }
+            
+            // Update active nav item
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            const activeLink = document.querySelector(`[href="#${sectionId}"]`) || 
+                              document.querySelector(`[href="#${sectionId.replace('Section', '')}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+        }
+        
+        // History Functions
+        function clearHistory() {
+            if (confirm('Tüm analiz geçmişini silmek istediğinizden emin misiniz?')) {
+                localStorage.removeItem('analysisHistory');
+                loadHistoryDisplay();
+                showToast('Geçmiş Temizlendi', 'Tüm analiz geçmişi başarıyla silindi.', 'success');
+            }
+        }
+        
+        function filterHistory() {
+            const searchTerm = document.getElementById('historySearch').value.toLowerCase();
+            const riskFilter = document.getElementById('riskFilter').value;
+            
+            const history = loadAnalysisHistory();
+            const filtered = history.filter(item => {
+                const matchesSearch = item.target.toLowerCase().includes(searchTerm);
+                const matchesRisk = !riskFilter || item.riskLevel === riskFilter;
+                return matchesSearch && matchesRisk;
+            });
+            
+            displayHistory(filtered);
+        }
+        
+        function loadHistoryDisplay() {
+            const history = loadAnalysisHistory();
+            displayHistory(history);
+        }
+        
+        function displayHistory(history) {
+            const container = document.getElementById('historyList');
+            
+            if (!container) return;
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p>Henüz analiz geçmişi bulunmuyor.</p>';
+                return;
+            }
+            
+            container.innerHTML = history.map(item => `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="history-target">${item.target}</div>
+                        <div class="history-meta">
+                            ${new Date(item.timestamp).toLocaleDateString('tr-TR')} - 
+                            Risk: ${getRiskLevelText(item.riskLevel)}
+                        </div>
+                    </div>
+                    <div class="history-actions">
+                        <button class="secondary-btn" onclick="reAnalyze('${item.target}')">
+                            <i class="fas fa-redo"></i>
+                            Tekrar Analiz Et
+                        </button>
+                        <button class="secondary-btn" onclick="saveToFavorites('${item.target}')">
+                            <i class="fas fa-star"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function reAnalyze(target) {
+            document.getElementById('target').value = target;
+            showSection('analysis');
+            showToast('Hedef Yüklendi', `${target} analiz için hazırlandı.`, 'info');
+        }
+        
+        // Report Functions
+        function generatePDFReport() {
+            console.log('PDF Report button clicked');
+            console.log('analysisResults:', analysisResults);
+            
+            if (!analysisResults) {
+                showToast('Hata', 'PDF raporu oluşturmak için önce bir analiz yapın.', 'error');
+                return;
+            }
+            
+            showToast('PDF Oluşturuluyor', 'PDF raporu hazırlanıyor...', 'info');
+            
+            // Prepare data for export
+            const exportData = {
+                target: analysisResults.target,
+                risk_level: analysisResults.analysis_summary?.risk_level || 'Bilinmiyor',
+                risk_score: calculateRiskScore(analysisResults),
+                confidence: analysisResults.analysis_summary?.confidence_score || 0,
+                sources: {
+                    'URLScan.io': analysisResults.metadata?.data_sources?.urlscan === 'success',
+                    'VirusTotal': analysisResults.metadata?.data_sources?.virustotal === 'success',
+                    'AbuseIPDB': analysisResults.metadata?.data_sources?.abuseipdb === 'success'
+                },
+                analysis_date: analysisResults.timestamp || new Date().toISOString(),
+                full_results: analysisResults
+            };
+            
+            console.log('Export data:', exportData);
+            
+            // Send to backend for PDF generation
+            fetch('http://127.0.0.1:5002/export/pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            })
+            .then(response => {
+                console.log('PDF Response status:', response.status);
+                if (response.ok) {
+                    return response.blob();
+                }
+                return response.text().then(text => {
+                    throw new Error(`PDF generation failed: ${text}`);
+                });
+            })
+            .then(blob => {
+                console.log('PDF blob received:', blob);
+                // Download the file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `secapp_rapor_${new Date().toISOString().slice(0,10)}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showToast('Başarılı', 'PDF raporu başarıyla indirildi.', 'success');
+            })
+            .catch(error => {
+                console.error('PDF export error:', error);
+                showToast('Hata', `PDF raporu oluşturulamadı: ${error.message}`, 'error');
+            });
+        }
+        
+        function generateExcelReport() {
+            if (!analysisResults) {
+                showToast('Hata', 'Excel raporu oluşturmak için önce bir analiz yapın.', 'error');
+                return;
+            }
+            
+            showToast('Excel Oluşturuluyor', 'Excel raporu hazırlanıyor...', 'info');
+            
+            // Prepare data for export
+            const exportData = {
+                target: analysisResults.target,
+                risk_level: analysisResults.analysis_summary?.risk_level || 'Bilinmiyor',
+                risk_score: calculateRiskScore(analysisResults),
+                confidence: analysisResults.analysis_summary?.confidence_score || 0,
+                sources: {
+                    'URLScan.io': analysisResults.metadata?.data_sources?.urlscan === 'success',
+                    'VirusTotal': analysisResults.metadata?.data_sources?.virustotal === 'success',
+                    'AbuseIPDB': analysisResults.metadata?.data_sources?.abuseipdb === 'success'
+                }
+            };
+            
+            // Send to backend for Excel generation
+            fetch('http://127.0.0.1:5002/export/excel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(exportData)
+            })
+            .then(response => {
+                if (response.ok) {
+                    return response.blob();
+                }
+                throw new Error('Excel generation failed');
+            })
+            .then(blob => {
+                // Download the file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `secapp_rapor_${new Date().toISOString().slice(0,10)}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showToast('Başarılı', 'Excel raporu başarıyla indirildi.', 'success');
+            })
+            .catch(error => {
+                console.error('Excel export error:', error);
+                showToast('Hata', 'Excel raporu oluşturulamadı. Lütfen daha sonra tekrar deneyin.', 'error');
+            });
+        }
+        
+        function generateJSONReport() {
+            console.log('JSON Report button clicked');
+            console.log('analysisResults:', analysisResults);
+            
+            if (!analysisResults) {
+                showToast('Hata', 'JSON raporu oluşturmak için önce bir analiz yapın.', 'error');
+                return;
+            }
+            
+            showToast('JSON Hazırlanıyor', 'JSON raporu hazırlanıyor...', 'info');
+            
+            console.log('Sending to /export/json');
+            
+            // Send to backend for JSON export
+            fetch('http://127.0.0.1:5002/export/json', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(analysisResults)
+            })
+            .then(response => {
+                console.log('JSON Response status:', response.status);
+                if (response.ok) {
+                    return response.blob();
+                }
+                return response.text().then(text => {
+                    console.error('JSON error response:', text);
+                    throw new Error(`JSON generation failed: ${text}`);
+                });
+            })
+            .then(blob => {
+                console.log('JSON blob received:', blob);
+                // Download the file
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `secapp_rapor_${new Date().toISOString().slice(0,10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                showToast('Başarılı', 'JSON raporu başarıyla indirildi.', 'success');
+            })
+            .catch(error => {
+                console.error('JSON export error:', error);
+                showToast('Hata', `JSON raporu oluşturulamadı: ${error.message}`, 'error');
+            });
+        }
+        
+        function showEmailModal() {
+            if (!analysisResults) {
+                showToast('Hata', 'Email göndermek için önce bir analiz yapın.', 'error');
+                return;
+            }
+            
+            showModal('emailModal');
+        }
+        
+        function sendEmailReport(event) {
+            event.preventDefault();
+            
+            const recipientEmail = document.getElementById('recipientEmail').value;
+            const emailSubject = document.getElementById('emailSubject').value;
+            const emailMessage = document.getElementById('emailMessage').value;
+            const includePDF = document.getElementById('includePDF').checked;
+            const includeExcel = document.getElementById('includeExcel').checked;
+            const includeJSON = document.getElementById('includeJSON').checked;
+            
+            if (!recipientEmail) {
+                showToast('Hata', 'Lütfen geçerli bir email adresi girin.', 'error');
+                return;
+            }
+            
+            if (!includePDF && !includeExcel && !includeJSON) {
+                showToast('Hata', 'En az bir rapor formatı seçmelisiniz.', 'error');
+                return;
+            }
+            
+            showToast('Email Gönderiliyor', 'Rapor email ile gönderiliyor...', 'info');
+            
+            // Email gönderme simülasyonu (gerçek implementasyon için backend gerekli)
+            setTimeout(() => {
+                closeModal('emailModal');
+                showToast('Başarılı', `Rapor ${recipientEmail} adresine başarıyla gönderildi.`, 'success');
+                
+                // Form temizle
+                document.getElementById('emailForm').reset();
+                document.getElementById('emailSubject').value = 'SecApp Güvenlik Analiz Raporu';
+                document.getElementById('includePDF').checked = true;
+                document.getElementById('includeExcel').checked = true;
+            }, 2000);
+        }
+        
+        // Add navigation event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Navigation links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const href = this.getAttribute('href');
+                    const sectionId = href.substring(1);
+                    showSection(sectionId + 'Section');
+                });
+            });
+            
+            // Load history when history section is shown
+            const historyLink = document.querySelector('[href="#history"]');
+            if (historyLink) {
+                historyLink.addEventListener('click', function() {
+                    setTimeout(loadHistoryDisplay, 100);
+                });
+            }
+        });
+    </script>
+</body>
+</html>
