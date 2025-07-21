@@ -90,7 +90,7 @@ OPENAI_API_KEY=your_actual_openai_api_key
 
 # Uygulama Ayarları
 DEBUG=False
-PORT=5000
+PORT=5002
 ```
 
 ### 5. Uygulamayı Başlatın
@@ -98,7 +98,7 @@ PORT=5000
 python app.py
 ```
 
-Uygulama `http://localhost:5000` adresinde çalışacaktır.
+Uygulama `http://localhost:5002` adresinde çalışacaktır.
 
 ## 🔑 API Anahtarları Nasıl Alınır?
 
@@ -132,13 +132,13 @@ GET /analyze?target=<hedef>
 **Örnek İstekler:**
 ```bash
 # URL analizi
-curl "http://localhost:5000/analyze?target=https://example.com"
+curl "http://localhost:5002/analyze?target=https://example.com"
 
 # Domain analizi  
-curl "http://localhost:5000/analyze?target=example.com"
+curl "http://localhost:5002/analyze?target=example.com"
 
 # IP analizi
-curl "http://localhost:5000/analyze?target=8.8.8.8"
+curl "http://localhost:5002/analyze?target=8.8.8.8"
 ```
 
 **Örnek Yanıt:**
@@ -171,18 +171,18 @@ Uygulamayı test etmek için bilinen şüpheli URL'leri kullanabilirsiniz:
 
 ```bash
 # Güvenli test
-curl "http://localhost:5000/analyze?target=google.com"
+curl "http://localhost:5002/analyze?target=google.com"
 
 # Şüpheli test (dikkatli kullanın)
-curl "http://localhost:5000/analyze?target=malware-traffic-analysis.net"
+curl "http://localhost:5002/analyze?target=malware-traffic-analysis.net"
 ```
 
 ## ⚙️ Konfigürasyon
 
 ### Çevre Değişkenleri
 - `DEBUG`: Geliştirme modu (True/False)
-- `PORT`: Uygulama portu (varsayılan: 5000)
-- `AI_MODEL`: Kullanılacak AI modeli (varsayılan: gpt-3.5-turbo)
+- `PORT`: Uygulama portu (varsayılan: 5002)
+- `AI_MODEL`: Kullanılacak AI modeli (varsayılan: gpt-4o)
 - `AI_MAX_TOKENS`: Maksimum AI yanıt uzunluğu (varsayılan: 1000)
 - `AI_TEMPERATURE`: AI yaratıcılık seviyesi (varsayılan: 0.3)
 
