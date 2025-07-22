@@ -1,4 +1,4 @@
-# MySecTools 🔒
+# MySecTool 🔒
 
 Gelişmiş Siber Güvenlik Analiz Platformu - AI destekli, çoklu kaynak, gerçek zamanlı güvenlik analizi
 
@@ -66,8 +66,8 @@ SecApp/
 
 ### 1. Projeyi İndirin
 ```bash
-git clone https://github.com/EkmekciEren/MySecTools.git
-cd MySecTools
+git clone https://github.com/EkmekciEren/MySecTool.git
+cd MySectool
 ```
 
 ### 2. Sanal Ortam Oluşturun
@@ -449,7 +449,7 @@ python app.py
 - 📧 **E-posta:** [erenekmekci500@gmail.com](mailto:erenekmekci500@gmail.com)
 - 🌐 **Portfolio:** [erenekmekci.com.tr](https://erenekmekci.com.tr)
 - 💼 **LinkedIn:** [eren-ekmekci](https://www.linkedin.com/in/eren-ekmekci-9706391a5/)
-- 📋 **Issues:** [MySecTools Issues](https://github.com/EkmekciEren/MySecTools/issues)
+- 📋 **Issues:** [MySectool Issues](https://github.com/EkmekciEren/MySectool/issues)
 
 Sorularınız için issue açabilir veya doğrudan e-posta gönderebilirsiniz. Feature request'ler ve bug report'lar memnuniyetle karşılanır!
 
