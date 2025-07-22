@@ -906,7 +906,6 @@
             gap: 8px;
         }
 
-        .theme-toggle,
         .notification-btn,
         .settings-btn {
             background: none;
@@ -924,7 +923,6 @@
             justify-content: center;
         }
 
-        .theme-toggle:hover,
         .notification-btn:hover,
         .settings-btn:hover {
             background: var(--gray-100);
@@ -1172,31 +1170,155 @@
             color: var(--text-secondary);
         }
 
-        /* Dark Theme */
-        /* Minimal Dark Theme */
-        [data-theme="dark"] {
-            --primary-color: var(--white);
-            --background-primary: var(--gray-900);
-            --background-secondary: var(--gray-800);
-            --text-primary: var(--white);
-            --text-secondary: var(--gray-300);
-            --border-color: var(--gray-700);
+        /* About Modal Styles */
+        .about-info {
+            text-align: center;
         }
 
-        [data-theme="dark"] body {
-            background: var(--gray-900);
+        .app-logo {
+            margin-bottom: 20px;
+        }
+
+        .app-logo i {
+            font-size: 3rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .app-logo h2 {
+            margin: 0;
+            font-weight: 300;
+            color: var(--text-primary);
+        }
+
+        .app-description {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: var(--background-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .features-list,
+        .tech-stack {
+            margin-bottom: 25px;
+            text-align: left;
+        }
+
+        .features-list h4,
+        .tech-stack h4 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+        }
+
+        .features-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .features-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tech-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tech-badge {
+            background: var(--primary-color);
             color: var(--white);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 0.85rem;
+            font-weight: 500;
         }
 
-        [data-theme="dark"] .main-card,
-        [data-theme="dark"] .chart-card,
-        [data-theme="dark"] .metric-card {
-            background: var(--gray-800);
-            border-color: var(--gray-700);
+        [data-theme="dark"] .tech-badge {
+            background: var(--text-primary);
+            color: var(--background-primary);
         }
 
-        [data-theme="dark"] .sidebar {
-            background: #1f2937;
+        .version-info {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .version-info a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .version-info a:hover {
+            text-decoration: underline;
+        }
+
+        /* Help Modal Styles */
+        .help-content {
+            text-align: left;
+        }
+
+        .help-section {
+            margin-bottom: 30px;
+        }
+
+        .help-section h4 {
+            margin-bottom: 15px;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .help-section ol,
+        .help-section ul {
+            padding-left: 20px;
+        }
+
+        .help-section li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .tips {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .tip {
+            background: var(--background-secondary);
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .faq {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .faq-item {
+            background: var(--background-secondary);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .faq-item strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .faq-item p {
+            margin: 0;
+            color: var(--text-secondary);
+            line-height: 1.5;
         }
 
         /* New Sections Styles */
@@ -1559,27 +1681,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#history" class="nav-link">
-                        <i class="fas fa-history"></i>
-                        Geçmiş
+                    <a href="#about" class="nav-link" onclick="showModal('aboutModal')">
+                        <i class="fas fa-info-circle"></i>
+                        Hakkında
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#batch" class="nav-link">
-                        <i class="fas fa-list"></i>
-                        Toplu Analiz
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#reports" class="nav-link">
-                        <i class="fas fa-file-alt"></i>
-                        Raporlar
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#settings" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        Ayarlar
+                    <a href="#help" class="nav-link" onclick="showModal('helpModal')">
+                        <i class="fas fa-question-circle"></i>
+                        Yardım
                     </a>
                 </li>
             </ul>
@@ -1588,9 +1698,6 @@
                 <button class="notification-btn" onclick="toggleNotifications()" title="Bildirimler">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationBadge">0</span>
-                </button>
-                <button class="theme-toggle" onclick="toggleTheme()" title="Tema Değiştir">
-                    <i class="fas fa-moon" id="themeIcon"></i>
                 </button>
                 <button class="settings-btn" onclick="showModal('settingsModal')" title="Ayarlar">
                     <i class="fas fa-cog"></i>
@@ -1683,12 +1790,6 @@
                         <label>
                             <input type="checkbox" id="showNotifications" checked>
                             Bildirimleri göster
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>
-                            <input type="checkbox" id="darkModeAuto">
-                            Otomatik karanlık mod (sistem temasına göre)
                         </label>
                     </div>
                 </div>
@@ -1795,6 +1896,137 @@
                         </button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Modal -->
+    <div class="modal" id="aboutModal">
+        <div class="modal-backdrop" onclick="closeModal('aboutModal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> SecApp Hakkında</h3>
+                <button class="modal-close" onclick="closeModal('aboutModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="about-info">
+                    <div class="app-logo">
+                        <i class="fas fa-shield-alt"></i>
+                        <h2>SecApp</h2>
+                    </div>
+                    
+                    <div class="app-description">
+                        <p><strong>Gelişmiş Siber Güvenlik Analiz Platformu</strong></p>
+                        <p>AI destekli, çoklu kaynak, gerçek zamanlı güvenlik analizi sunan modern bir platform.</p>
+                    </div>
+                    
+                    <div class="features-list">
+                        <h4>🚀 Özellikler:</h4>
+                        <ul>
+                            <li>✅ AI Destekli Risk Değerlendirmesi (GPT-4o)</li>
+                            <li>✅ Çoklu Güvenlik Kaynağı (VirusTotal, URLScan.io, AbuseIPDB)</li>
+                            <li>✅ İnteraktif Görselleştirmeler</li>
+                            <li>✅ Kapsamlı Raporlama (PDF, Excel, JSON)</li>
+                            <li>✅ Minimal Modern Tasarım</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="tech-stack">
+                        <h4>🛠 Teknolojiler:</h4>
+                        <div class="tech-badges">
+                            <span class="tech-badge">Python Flask</span>
+                            <span class="tech-badge">Chart.js</span>
+                            <span class="tech-badge">OpenAI</span>
+                            <span class="tech-badge">ReportLab</span>
+                        </div>
+                    </div>
+                    
+                    <div class="version-info">
+                        <p><strong>Versiyon:</strong> 1.0.0</p>
+                        <p><strong>Geliştirici:</strong> Eren Ekmekci</p>
+                        <p><strong>GitHub:</strong> <a href="https://github.com/EkmekciEren/MySecTools" target="_blank">MySecTools</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="helpModal">
+        <div class="modal-backdrop" onclick="closeModal('helpModal')"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> Yardım & Kullanım Kılavuzu</h3>
+                <button class="modal-close" onclick="closeModal('helpModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="help-content">
+                    <div class="help-section">
+                        <h4>🎯 Nasıl Kullanılır?</h4>
+                        <ol>
+                            <li><strong>Hedef Girişi:</strong> URL, domain veya IP adresi girin</li>
+                            <li><strong>Analiz Başlatma:</strong> "Kapsamlı Güvenlik Analizi Başlat" butonuna tıklayın</li>
+                            <li><strong>Sonuçları İnceleme:</strong> Grafikler ve AI analiziyle sonuçları görüntüleyin</li>
+                            <li><strong>Rapor İndirme:</strong> PDF, Excel veya JSON formatında rapor indirin</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h4>📊 Desteklenen Analiz Türleri</h4>
+                        <ul>
+                            <li><strong>URL Analizi:</strong> Web sitelerinin güvenlik durumu</li>
+                            <li><strong>Domain Analizi:</strong> Domain reputasyonu ve risk seviyesi</li>
+                            <li><strong>IP Analizi:</strong> IP adreslerinin kötüye kullanım geçmişi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h4>📈 Görselleştirmeler</h4>
+                        <ul>
+                            <li><strong>Risk Skoru Göstergesi:</strong> Genel risk seviyesi</li>
+                            <li><strong>Güvenlik Durumu Dağılımı:</strong> Pie chart ile durum analizi</li>
+                            <li><strong>Tehdit Tespiti Özeti:</strong> Bar chart ile tespit sonuçları</li>
+                            <li><strong>Veri Kaynakları Güvenilirliği:</strong> Radar chart ile kaynak analizi</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h4>🔧 İpuçları</h4>
+                        <div class="tips">
+                            <div class="tip">
+                                <strong>💡 URL Formatı:</strong> http:// veya https:// ile başlayın
+                            </div>
+                            <div class="tip">
+                                <strong>💡 Domain:</strong> Alt domain'ler de desteklenir (subdomain.example.com)
+                            </div>
+                            <div class="tip">
+                                <strong>💡 IP Adresi:</strong> IPv4 formatında girin (192.168.1.1)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="help-section">
+                        <h4>❓ Sık Sorulan Sorular</h4>
+                        <div class="faq">
+                            <div class="faq-item">
+                                <strong>S: Analiz ne kadar sürer?</strong>
+                                <p>C: Genellikle 10-30 saniye arası, API yanıt sürelerine bağlı olarak değişir.</p>
+                            </div>
+                            <div class="faq-item">
+                                <strong>S: Hangi güvenlik kaynakları kullanılıyor?</strong>
+                                <p>C: VirusTotal, URLScan.io, AbuseIPDB ve OpenAI GPT-4o kullanılıyor.</p>
+                            </div>
+                            <div class="faq-item">
+                                <strong>S: Raporlar güvenli mi?</strong>
+                                <p>C: Evet, tüm veriler şifrelenir ve raporlar local olarak oluşturulur.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2626,11 +2858,6 @@
         
         // Modern UI Functions
         function initializeApp() {
-            // Initialize theme
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            updateThemeIcon(savedTheme);
-            
             // Initialize notifications
             initializeNotifications();
             updateNotificationBadge();
@@ -2640,22 +2867,6 @@
             
             // Show welcome toast
             showToast('Hoş geldiniz!', 'SecApp güvenlik analiz platformuna hoş geldiniz.', 'success');
-        }
-        
-        function toggleTheme() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
-            
-            showToast('Tema Değiştirildi', `${newTheme === 'dark' ? 'Karanlık' : 'Aydınlık'} tema aktif edildi.`, 'success');
-        }
-        
-        function updateThemeIcon(theme) {
-            const icon = document.getElementById('themeIcon');
-            icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
         }
         
         function toggleMobileMenu() {
@@ -2809,11 +3020,9 @@
                 // Apply settings to form
                 const autoSave = document.getElementById('autoSaveHistory');
                 const showNotifications = document.getElementById('showNotifications');
-                const darkModeAuto = document.getElementById('darkModeAuto');
                 
                 if (autoSave) autoSave.checked = parsed.autoSaveHistory !== false;
                 if (showNotifications) showNotifications.checked = parsed.showNotifications !== false;
-                if (darkModeAuto) darkModeAuto.checked = parsed.darkModeAuto === true;
             }
         }
         
@@ -2821,7 +3030,6 @@
             const settings = {
                 autoSaveHistory: document.getElementById('autoSaveHistory')?.checked ?? true,
                 showNotifications: document.getElementById('showNotifications')?.checked ?? true,
-                darkModeAuto: document.getElementById('darkModeAuto')?.checked ?? false,
                 openaiKey: document.getElementById('openaiKey')?.value ?? '',
                 virustotalKey: document.getElementById('virustotalKey')?.value ?? '',
                 urlscanKey: document.getElementById('urlscanKey')?.value ?? '',
@@ -2840,7 +3048,6 @@
                 // Reset form
                 document.getElementById('autoSaveHistory').checked = true;
                 document.getElementById('showNotifications').checked = true;
-                document.getElementById('darkModeAuto').checked = false;
                 document.getElementById('openaiKey').value = '';
                 document.getElementById('virustotalKey').value = '';
                 document.getElementById('urlscanKey').value = '';
@@ -3160,11 +3367,6 @@
             }
             
             // Ctrl/Cmd + D: Toggle dark mode
-            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
-                e.preventDefault();
-                toggleTheme();
-            }
-            
             // Escape: Close modals/sidebar
             if (e.key === 'Escape') {
                 closeModal('settingsModal');

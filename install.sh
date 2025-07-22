@@ -96,10 +96,24 @@ for dir in "${REQUIRED_DIRS[@]}"; do
 done
 
 echo -e "\n${GREEN}✅ Kurulum başarıyla tamamlandı!${NC}"
+
+# CLI çalıştırılabilir yap
+echo -e "\n${BLUE}CLI hazırlanıyor...${NC}"
+chmod +x cli.py
+chmod +x secapp
+
 echo -e "\n${BLUE}🚀 Uygulamayı başlatmak için:${NC}"
+echo -e "\n${GREEN}📱 Web Arayüzü:${NC}"
 echo -e "${GREEN}   source venv/bin/activate${NC}"
 echo -e "${GREEN}   python app.py${NC}"
-echo -e "\n${BLUE}📱 Tarayıcınızda http://localhost:5000 adresini açın${NC}"
+echo -e "${GREEN}   Tarayıcıda: http://localhost:5000${NC}"
+
+echo -e "\n${GREEN}💻 CLI Kullanımı:${NC}"
+echo -e "${GREEN}   ./secapp google.com              # Tek analiz${NC}"
+echo -e "${GREEN}   ./secapp google.com -v           # Detaylı analiz${NC}"
+echo -e "${GREEN}   ./secapp -b targets.txt          # Toplu analiz${NC}"
+echo -e "${GREEN}   ./secapp --interactive           # İnteraktif mod${NC}"
+echo -e "${GREEN}   ./secapp --help                  # Yardım${NC}"
 
 # Sistem bilgilerini göster
 echo -e "\n${BLUE}📊 Sistem Bilgileri:${NC}"

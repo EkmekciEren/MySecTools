@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# SecApp CLI Launcher Script
+# This script provides a convenient way to run SecApp CLI
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VENV_PYTHON="$SCRIPT_DIR/.venv/bin/python"
+CLI_SCRIPT="$SCRIPT_DIR/cli.py"
+
+# Check if virtual environment exists
+if [ ! -f "$VENV_PYTHON" ]; then
+    echo "Error: Virtual environment not found at $VENV_PYTHON"
+    echo "Please run install.sh first to set up the environment."
+    exit 1
+fi
+
+# Check if CLI script exists
+if [ ! -f "$CLI_SCRIPT" ]; then
+    echo "Error: CLI script not found at $CLI_SCRIPT"
+    exit 1
+fi
+
+# Run the CLI with all passed arguments
+"$VENV_PYTHON" "$CLI_SCRIPT" "$@"

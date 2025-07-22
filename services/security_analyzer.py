@@ -78,15 +78,33 @@ class SecurityAnalyzer:
         """Generate step-by-step AI analysis of collected data"""
         try:
             ai_results = self.ai_analyzer.analyze_step_by_step(target, analysis_data)
+            ai_error_message = ai_results.get('ai_error_message')
+            
+            # None'ı string'e çevrilmesini önle
+            if ai_error_message == "None" or ai_error_message is None:
+                ai_error_message = None
+                
             return {
                 'ai_step_analyses': ai_results.get('step_by_step_analysis', {}),
                 'ai_final_analysis': ai_results.get('final_comprehensive_analysis', ''),
-                'ai_analysis_method': ai_results.get('analysis_method', 'unknown')
+                'ai_analysis_method': ai_results.get('analysis_method', 'unknown'),
+                'ai_error_message': ai_error_message  # Hata mesajını ilet
             }
         except Exception as e:
-            logger.error(f"Error generating step-by-step AI analysis: {str(e)}")
+            logger.warning(f"AI step-by-step analysis wrapper error: {str(e)}")
+            error_str = str(e).lower()
+            if 'quota' in error_str or '429' in error_str:
+                error_message = "⚠️ AI analiz yapılamadı: OpenAI API kotası aşıldı. Kural tabanlı analiz uygulanıyor..."
+            elif 'timeout' in error_str:
+                error_message = "⚠️ AI analiz yapılamadı: Bağlantı zaman aşımı. Kural tabanlı analiz uygulanıyor..."
+            elif 'authentication' in error_str or 'unauthorized' in error_str:
+                error_message = "⚠️ AI analiz yapılamadı: API anahtarı geçersiz. Kural tabanlı analiz uygulanıyor..."
+            else:
+                error_message = "⚠️ AI analiz yapılamadı: Teknik bir hata oluştu. Kural tabanlı analiz uygulanıyor..."
+                
             return {
                 'ai_step_analyses': {},
-                'ai_final_analysis': f"AI analizi oluşturulurken hata oluştu: {str(e)}",
-                'ai_analysis_method': 'error'
+                'ai_final_analysis': f"AI analizi oluşturulurken hata oluştu. Kural tabanlı analiz uygulanıyor.",
+                'ai_analysis_method': 'error',
+                'ai_error_message': error_message
             }

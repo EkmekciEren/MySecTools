@@ -1,0 +1,8 @@
+# SecApp Batch Analysis Target List
+# Lines starting with # are comments and will be ignored
+
+google.com
+microsoft.com
+github.com
+stackoverflow.com
+8.8.8.8
