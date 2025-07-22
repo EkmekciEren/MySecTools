@@ -449,7 +449,6 @@ python app.py
 - 📧 **E-posta:** [erenekmekci500@gmail.com](mailto:erenekmekci500@gmail.com)
 - 🌐 **Portfolio:** [erenekmekci.com.tr](https://erenekmekci.com.tr)
 - 💼 **LinkedIn:** [eren-ekmekci](https://www.linkedin.com/in/eren-ekmekci-9706391a5/)
-- 🐙 **GitHub:** [EkmekciEren](https://github.com/EkmekciEren)
 - 📋 **Issues:** [MySecTools Issues](https://github.com/EkmekciEren/MySecTools/issues)
 
 Sorularınız için issue açabilir veya doğrudan e-posta gönderebilirsiniz. Feature request'ler ve bug report'lar memnuniyetle karşılanır!
