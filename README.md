@@ -5,6 +5,9 @@ Gelişmiş Siber Güvenlik Analiz Platformu - AI destekli, çoklu kaynak, gerçe
 ## 🚀 Özellikler
 
 - **AI Destekli Analiz**: OpenAI GPT-4o ile kapsamlı risk değerlendirmesi
+- **🔄 Akıllı Cache Sistemi**: Analiz sonuçlarını cache'leyerek API quota tasarrufu
+- **⚡ Rate Limiting & Retry**: Exponential backoff ile 429 hatalarını önleme
+- **🧠 Konservatif AI Modu**: Düşük riskli hedefler için kural tabanlı analiz
 - **Çoklu Güvenlik Kaynağı**: URLScan.io, VirusTotal, AbuseIPDB entegrasyonu
 - **Görsel Raporlama**: Chart.js ile interaktif grafikler ve göstergeler
 - **Kapsamlı Export**: PDF, Excel, JSON formatında detaylı raporlar
@@ -115,6 +118,30 @@ chmod +x secapp
 ./secapp google.com -v
 ```
 
+## ⚙️ Rate Limiting ve Cache Konfigürasyonu
+
+`.env` dosyasında AI analizi için özelleştirilebilir ayarlar:
+
+```bash
+# AI Rate Limiting Configuration
+AI_MAX_RETRIES=3                # Maximum retry attempts for API calls
+AI_BASE_DELAY=1.0               # Base delay between retries (seconds)
+AI_MAX_DELAY=30.0               # Maximum delay between retries (seconds)
+AI_REQUEST_TIMEOUT=30.0         # Request timeout (seconds)
+AI_CONSERVATIVE_MODE=true       # Use rule-based analysis for low-risk targets
+AI_CACHE_TTL=3600              # Cache time-to-live (seconds, default: 1 hour)
+
+# Demo Mode (for testing without consuming API quota)
+DEMO_MODE=false
+```
+
+### 429 Hatası Önleme Stratejileri
+
+1. **Exponential Backoff**: API çağrıları arasında artan bekleme süreleri
+2. **Akıllı Cache**: Benzer analizleri cache'den sunma
+3. **Konservatif Mod**: Düşük riskli hedefler için AI kullanmama
+4. **Tehdit Seviyesi Analizi**: Sadece gerekli durumlarda AI çağrısı
+
 ## 💻 CLI Kullanımı
 
 SecApp, web arayüzüne ek olarak güçlü bir komut satırı arayüzü (CLI) sunar. Bu özellik özellikle Linux kullanıcıları, sistem yöneticileri ve otomasyonlar için idealdir.
@@ -164,6 +191,24 @@ echo -e "google.com\nmicrosoft.com\ngithub.com" > targets.txt
 
 # Batch analiz raporları
 ./secapp -b targets.txt -o json -d ./reports/
+```
+
+#### Cache Yönetimi
+```bash
+# Cache istatistikleri görüntüle
+./secapp --cache-stats
+
+# Cache dosyalarını temizle
+./secapp --cache-clear
+```
+
+#### Gelişmiş Seçenekler
+```bash
+# AI analizini devre dışı bırak (sadece API tabanlı analiz)
+./secapp example.com --no-ai
+
+# İnteraktif mod
+./secapp --interactive
 ```
 
 #### AI Devre Dışı Mod
@@ -406,33 +451,69 @@ Bu proje MIT lisansı altında dağıtılmaktadır.
 
 ## 🆘 Sorun Giderme
 
-### Yaygın Hatalar
+### 🚨 429 "Too Many Requests" Hatası
+
+Bu hata OpenAI API quota'nızın aşıldığını gösterir. **Çözümler:**
+
+1. **🤖 Otomatik Çözüm**: Uygulama otomatik olarak kural tabanlı analize geçer
+2. **💾 Cache Kullanımı**: Benzer hedefler cache'den sunulur (1 saat TTL)
+3. **🎯 Konservatif Mod**: Düşük riskli hedefler için AI kullanılmaz
+4. **⚙️ Manuel Çözümler**: 
+   ```bash
+   # Cache'i temizle
+   ./secapp --cache-clear
+   
+   # Sadece API tabanlı analiz yap
+   ./secapp example.com --no-ai
+   
+   # Cache istatistiklerini görüntüle
+   ./secapp --cache-stats
+   ```
+
+### 🔧 Cache Yönetimi
+
+```bash
+# CLI ile cache yönetimi
+./secapp --cache-stats        # İstatistikleri göster
+./secapp --cache-clear        # Cache'i temizle
+
+# Web arayüzünden: Ayarlar > Cache İstatistikleri/Temizle
+```
+
+### 🔑 API Anahtar Sorunları
 
 **"API key not configured"**
 - `.env` dosyasındaki API anahtarlarını kontrol edin
 - Anahtarların doğru formatta olduğundan emin olun
-
-**"Module not found" hatası**
-- Sanal ortamın aktif olduğundan emin olun
-- `pip install -r requirements.txt` komutunu çalıştırın
+- Web arayüzünde "API Anahtarlarını Test Et" butonunu kullanın
 
 **"Connection timeout" hatası**
 - İnternet bağlantınızı kontrol edin
 - API servislerinin erişilebilir olduğundan emin olun
+- `.env` dosyasında `AI_REQUEST_TIMEOUT` değerini artırın
 
-**AI analiz yapılmıyor**
-- OpenAI API anahtarının geçerli olduğundan emin olun
-- Kredi bakiyenizi kontrol edin
-- `--no-ai` parametresi ile API-only analiz deneyebilirsiniz
+### 🐍 Python/Modül Hataları
+
+**"Module not found" hatası**
+- Sanal ortamın aktif olduğundan emin olun: `source .venv/bin/activate`
+- Bağımlılıkları yeniden yükleyin: `pip install -r requirements.txt`
 
 **CLI çalışmıyor**
 - `chmod +x secapp` komutu ile çalıştırma izni verin
 - Python sanal ortamının aktif olduğundan emin olun
 - `./secapp --help` ile parametreleri kontrol edin
 
+### 🤖 AI Analiz Sorunları
+
 **"⚠️ AI analiz yapılamadı" mesajı**
 - Bu normal bir durumdur, kural tabanlı analiz devam eder
-- OpenAI quota'nızı kontrol edin
+- OpenAI quota'nızı kontrol edin: https://platform.openai.com/usage
+- Konservatif modu devre dışı bırakın: `.env` dosyasında `AI_CONSERVATIVE_MODE=false`
+
+**AI sürekli hata veriyor**
+- API anahtarının geçerli olduğundan emin olun
+- Kredi bakiyenizi kontrol edin
+- Rate limiting ayarlarını optimize edin (.env dosyasında)
 - `--no-ai` parametresi ile sadece API analizi yapabilirsiniz
 
 ### Debug Modu

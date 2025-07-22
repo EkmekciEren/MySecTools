@@ -2,30 +2,241 @@ import os
 import logging
 from typing import Dict, Any, List
 import json
+import time
+import random
+from utils.cache_manager import CacheManager
+from utils.rate_limit_manager import OpenAIRateLimitManager
+from utils.data_chunker import DataChunker
+from utils.enhanced_rule_analyzer import EnhancedRuleBasedAnalyzer
 
 logger = logging.getLogger(__name__)
 
 class AIAnalyzer:
     """AI-powered security analysis using OpenAI GPT-4o"""
     
-    def __init__(self):
-        self.api_key = os.getenv('OPENAI_API_KEY')
+    def __init__(self, api_key=None):
+        """
+        Initialize AI Analyzer
+        
+        Args:
+            api_key: Custom OpenAI API key to use instead of environment variable
+        """
+        self.api_key = api_key or os.getenv('OPENAI_API_KEY')
         self.model = os.getenv('AI_MODEL', 'gpt-4o')
         self.max_tokens = int(os.getenv('AI_MAX_TOKENS', '2000'))
         self.temperature = float(os.getenv('AI_TEMPERATURE', '0.3'))
+        
+        # Rate limiting configuration
+        self.max_retries = int(os.getenv('AI_MAX_RETRIES', '3'))
+        self.base_delay = float(os.getenv('AI_BASE_DELAY', '1.0'))
+        self.max_delay = float(os.getenv('AI_MAX_DELAY', '30.0'))
+        self.request_timeout = float(os.getenv('AI_REQUEST_TIMEOUT', '30.0'))
+        
+        # Cache configuration
+        cache_ttl = int(os.getenv('AI_CACHE_TTL', '3600'))  # 1 hour default
+        self.cache_manager = CacheManager(ttl_seconds=cache_ttl)
+        
+        # Rate limit manager
+        self.rate_limit_manager = OpenAIRateLimitManager(self.api_key)
+        
+        # Data chunker for large requests
+        self.data_chunker = DataChunker()
+        
+        # Enhanced rule-based analyzer for fallback
+        self.enhanced_rule_analyzer = EnhancedRuleBasedAnalyzer()
         
         # Initialize OpenAI client if available
         self.client = None
         if self.api_key and self.api_key != 'your_openai_api_key_here':
             try:
                 from openai import OpenAI
-                self.client = OpenAI(api_key=self.api_key)
+                self.client = OpenAI(
+                    api_key=self.api_key,
+                    timeout=self.request_timeout
+                )
+                # Test quota on initialization (async, don't block startup)
+                self._test_quota_async()
             except ImportError:
                 logger.error("OpenAI library not installed")
     
+    def _test_quota_async(self):
+        """Test quota asynchronously without blocking initialization"""
+        try:
+            # Try a minimal request to check quota
+            test_response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": "Hi"}],
+                max_tokens=1,
+                temperature=0
+            )
+            logger.debug("✅ OpenAI quota test passed")
+        except Exception as e:
+            error_str = str(e).lower()
+            if 'quota' in error_str or 'insufficient_quota' in error_str:
+                self.rate_limit_manager.rate_limit.quota_exceeded = True
+                logger.warning("🚨 OpenAI quota exceeded detected on startup - rule-based analysis will be used")
+            else:
+                logger.debug(f"Quota test failed with: {str(e)}")
+    
+    def _make_openai_request(self, messages, max_tokens=None, temperature=None):
+        """
+        Make OpenAI API request with comprehensive rate limiting
+        
+        Args:
+            messages: List of messages for the chat completion
+            max_tokens: Maximum tokens for response
+            temperature: Temperature for response generation
+            
+        Returns:
+            OpenAI response object
+            
+        Raises:
+            Exception: If all retries fail
+        """
+        # Early exit if quota exceeded
+        if self.rate_limit_manager.rate_limit.quota_exceeded:
+            raise Exception("insufficient_quota: Quota exceeded, using rule-based analysis")
+        
+        if not self.client:
+            raise Exception("OpenAI client not initialized")
+        
+        max_tokens = max_tokens or self.max_tokens
+        temperature = temperature or self.temperature
+        
+        # Estimate total tokens for request
+        request_text = json.dumps(messages, ensure_ascii=False)
+        estimated_request_tokens = self.data_chunker.estimate_tokens(request_text)
+        estimated_total_tokens = estimated_request_tokens + max_tokens
+        
+        # Check rate limits before making request
+        if not self.rate_limit_manager.wait_if_needed(estimated_total_tokens):
+            raise Exception("Rate limit exceeded and cannot proceed")
+        
+        for attempt in range(self.max_retries + 1):  # +1 for initial attempt
+            try:
+                # Double-check rate limits just before request
+                can_proceed, reason, wait_seconds = self.rate_limit_manager.can_make_request(estimated_total_tokens)
+                if not can_proceed:
+                    if wait_seconds > 0:
+                        logger.warning(f"Last-minute rate limit hit: {reason}, waiting {wait_seconds}s")
+                        time.sleep(wait_seconds + 1)
+                    else:
+                        raise Exception(f"Rate limit exceeded: {reason}")
+                
+                logger.debug(f"OpenAI API request attempt {attempt + 1}/{self.max_retries + 1}")
+                logger.debug(f"Estimated tokens: {estimated_total_tokens}")
+                
+                # Make the actual request
+                response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature
+                )
+                
+                # Update rate limits from response headers if available
+                if hasattr(response, '_response') and hasattr(response._response, 'headers'):
+                    self.rate_limit_manager.update_from_headers(dict(response._response.headers))
+                
+                # Record successful request
+                actual_tokens = getattr(response.usage, 'total_tokens', estimated_total_tokens) if hasattr(response, 'usage') else estimated_total_tokens
+                self.rate_limit_manager.record_request(actual_tokens)
+                
+                logger.debug(f"OpenAI API request successful, tokens used: {actual_tokens}")
+                return response
+                
+            except Exception as e:
+                error_str = str(e).lower()
+                
+                # Check if it's a rate limit error
+                if '429' in error_str or 'quota' in error_str or 'rate limit' in error_str:
+                    # Check for quota exhaustion (permanent failure)
+                    if 'insufficient_quota' in error_str or 'exceeded your current quota' in error_str:
+                        self.rate_limit_manager.rate_limit.quota_exceeded = True
+                        logger.error("🚨 OpenAI quota exceeded - switching to rule-based analysis permanently")
+                        raise e  # Re-raise to trigger fallback
+                    
+                    # Regular rate limiting - retry with backoff
+                    if attempt < self.max_retries:
+                        # Progressive backoff with rate limit awareness
+                        base_delay = self.base_delay * (2 ** attempt)
+                        jitter = random.uniform(0, 1)
+                        
+                        # If we know we're hitting rate limits, wait longer
+                        if 'quota' in error_str:
+                            # Quota exhausted - wait longer
+                            delay = min(base_delay * 3 + jitter, self.max_delay)
+                        else:
+                            # Regular rate limit - shorter wait
+                            delay = min(base_delay + jitter, self.max_delay)
+                        
+                        logger.warning(f"Rate limit hit, retrying in {delay:.2f} seconds (attempt {attempt + 1})")
+                        time.sleep(delay)
+                        continue
+                    else:
+                        logger.error("All retry attempts exhausted for rate limit error")
+                        raise e
+                
+                # For non-rate-limit errors, don't retry
+                logger.error(f"OpenAI API error: {str(e)}")
+                raise e
+        
+        raise Exception("Maximum retry attempts reached")
+
+    def _assess_threat_level(self, analysis_data: Dict[str, Any]) -> str:
+        """
+        Assess overall threat level from analysis data
+        
+        Returns:
+            'HIGH', 'MEDIUM', or 'LOW'
+        """
+        threat_score = 0
+        
+        # URLScan threats
+        urlscan = analysis_data.get('urlscan_data', {})
+        if urlscan and 'error' not in urlscan:
+            malicious = urlscan.get('malicious_domains', 0)
+            suspicious = urlscan.get('suspicious_domains', 0)
+            threat_score += malicious * 3 + suspicious * 1
+        
+        # VirusTotal threats
+        vt = analysis_data.get('virustotal_data', {})
+        if vt and 'error' not in vt:
+            malicious = vt.get('malicious_count', 0)
+            suspicious = vt.get('suspicious_count', 0)
+            threat_score += malicious * 2 + suspicious * 1
+        
+        # AbuseIPDB threats
+        abuse = analysis_data.get('abuseipdb_data', {})
+        if abuse and 'error' not in abuse:
+            confidence = abuse.get('abuse_confidence', 0)
+            if confidence > 75:
+                threat_score += 3
+            elif confidence > 50:
+                threat_score += 2
+            elif confidence > 25:
+                threat_score += 1
+        
+        if threat_score >= 5:
+            return 'HIGH'
+        elif threat_score >= 2:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
+    
+    def _source_has_threats(self, source: str, data: dict) -> bool:
+        """Check if a data source has any threats worth AI analysis"""
+        if source == 'urlscan_data':
+            return data.get('malicious_domains', 0) > 0 or data.get('suspicious_domains', 0) > 0
+        elif source == 'virustotal_data':
+            return data.get('malicious_count', 0) > 0 or data.get('suspicious_count', 0) > 0
+        elif source == 'abuseipdb_data':
+            return data.get('abuse_confidence', 0) > 25
+        return False
+
     def analyze_step_by_step(self, target: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Generate step-by-step AI analysis of security data
+        Generate step-by-step AI analysis of security data with chunking support
         
         Args:
             target: The analyzed target
@@ -34,26 +245,96 @@ class AIAnalyzer:
         Returns:
             Dictionary with individual analyses and final summary
         """
+        # Rate limit durumunu kontrol et - Free tier için daha agresif threshold
+        rate_status = self.rate_limit_manager.get_status()
+        
+        # Free tier için %85 threshold (daha agresif)
+        if (rate_status.get('request_usage_percent', 0) > 85 or 
+            rate_status.get('token_usage_percent', 0) > 85):
+            logger.info(f"High rate limit usage detected (free tier), using chunked analysis for {target}")
+            return self.analyze_with_chunking(target, analysis_data)
+        
+        # Normal step-by-step analiz
+        return self._analyze_step_by_step_normal(target, analysis_data)
+    
+    def _analyze_step_by_step_normal(self, target: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Normal step-by-step analiz (eski yöntem)"""
+        # Check cache first
+        cached_result = self.cache_manager.get_cached_analysis(target, analysis_data)
+        if cached_result:
+            logger.info(f"Returning cached analysis for target: {target}")
+            return cached_result
+        
+        # Check if quota is exceeded (early exit)
+        if self.rate_limit_manager.rate_limit.quota_exceeded:
+            logger.warning("OpenAI quota exceeded - using rule-based analysis")
+            fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+            fallback_result['ai_error_message'] = "⚠️ OpenAI quota aşıldı. Kural tabanlı analiz kullanılıyor..."
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+            return fallback_result
+        
         if not self.client:
             fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
             fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: API anahtarı yapılandırılmamış. Kural tabanlı analiz uygulanıyor..."
             return fallback_result
         
+        # Quick quota test before starting analysis
         try:
+            # Make a minimal test request first to check quota
+            test_response = self._make_openai_request([
+                {"role": "user", "content": "test"}
+            ], max_tokens=1, temperature=0)
+            logger.debug("Quota test passed, proceeding with analysis")
+        except Exception as e:
+            error_str = str(e).lower()
+            if 'quota' in error_str or 'insufficient_quota' in error_str:
+                self.rate_limit_manager.rate_limit.quota_exceeded = True
+                logger.error("🚨 Quota exceeded detected in test request - switching to rule-based analysis")
+                fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+                fallback_result['ai_error_message'] = "⚠️ OpenAI quota aşıldı. Kural tabanlı analiz kullanılıyor..."
+                self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+                return fallback_result
+            # For other errors, continue with normal flow
+            logger.warning(f"Quota test failed with non-quota error: {str(e)}")
+        
+        try:
+            # First, check if we need AI analysis or if rule-based is sufficient
+            threat_level = self._assess_threat_level(analysis_data)
+            
+            # For low threat levels, use rule-based analysis to save API quota
+            if threat_level == 'LOW' and os.getenv('AI_CONSERVATIVE_MODE', 'true').lower() == 'true':
+                logger.info("Using rule-based analysis for low-threat target to conserve API quota")
+                fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+                fallback_result['ai_error_message'] = "ℹ️ API kotası korunması için kural tabanlı analiz kullanıldı (düşük risk tespit edildi)"
+                
+                # Cache the result
+                self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+                return fallback_result
+            
             step_analyses = {}
             data_sources = ['urlscan_data', 'virustotal_data', 'abuseipdb_data']
             
-            # Step 1: Analyze each data source individually
+            # Step 1: Analyze each data source individually - only if they have threats
             for source in data_sources:
                 if source in analysis_data and analysis_data[source] and 'error' not in analysis_data[source]:
-                    step_analyses[source] = self._analyze_single_source(source, analysis_data[source])
+                    # Check if this source has any threats worth AI analysis
+                    if self._source_has_threats(source, analysis_data[source]):
+                        step_analyses[source] = self._analyze_single_source(source, analysis_data[source])
+                    else:
+                        # Use rule-based for clean sources
+                        step_analyses[source] = self._generate_step_fallback_analysis(source, analysis_data[source], "clean_source")
                 else:
                     step_analyses[source] = f"{source.replace('_data', '').title()} verisi mevcut değil veya hatalı."
             
-            # Step 2: Generate comprehensive final analysis
+            # Step 2: Generate comprehensive final analysis only if high/medium threat
             try:
-                final_analysis = self._generate_final_comprehensive_analysis(target, analysis_data, step_analyses)
-                ai_error_message = None  # Success case
+                if threat_level in ['HIGH', 'MEDIUM']:
+                    final_analysis = self._generate_final_comprehensive_analysis(target, analysis_data, step_analyses)
+                    ai_error_message = None  # Success case
+                else:
+                    # Use rule-based for low threats
+                    final_analysis = self._generate_fallback_comprehensive_analysis(analysis_data, "low_threat")
+                    ai_error_message = "ℹ️ Düşük risk seviyesi nedeniyle kural tabanlı analiz kullanıldı"
             except Exception as final_error:
                 logger.warning(f"Final comprehensive analysis failed: {str(final_error)}")
                 final_analysis = self._generate_fallback_comprehensive_analysis(analysis_data, str(final_error))
@@ -69,12 +350,18 @@ class AIAnalyzer:
                 else:
                     ai_error_message = "⚠️ AI analiz yapılamadı: Teknik bir hata oluştu. Kural tabanlı analiz uygulanıyor..."
             
-            return {
+            result = {
                 'step_by_step_analysis': step_analyses,
                 'final_comprehensive_analysis': final_analysis,
                 'analysis_method': 'ai_powered_step_by_step',
-                'ai_error_message': ai_error_message
+                'ai_error_message': ai_error_message,
+                'threat_level': threat_level
             }
+            
+            # Cache the result
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, result)
+            
+            return result
             
         except Exception as e:
             logger.warning(f"AI step-by-step analysis error: {str(e)}")
@@ -90,7 +377,9 @@ class AIAnalyzer:
                 fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: API anahtarı geçersiz. Kural tabanlı analiz uygulanıyor..."
             else:
                 fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: Teknik bir hata oluştu. Kural tabanlı analiz uygulanıyor..."
-                
+            
+            # Cache fallback result too
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
             return fallback_result
 
     def _analyze_single_source(self, source_name: str, data: dict) -> str:
@@ -114,15 +403,10 @@ class AIAnalyzer:
             Kısa ve net bir analiz yap (maksimum 3-4 cümle):
             """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": "Sen bir siber güvenlik uzmanısın. Teknik verileri analiz edip anlaşılır değerlendirmeler yapıyorsun."},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=300,
-                temperature=0.3
-            )
+            response = self._make_openai_request([
+                {"role": "system", "content": "Sen bir siber güvenlik uzmanısın. Teknik verileri analiz edip anlaşılır değerlendirmeler yapıyorsun."},
+                {"role": "user", "content": prompt}
+            ], max_tokens=300, temperature=0.3)
             
             return response.choices[0].message.content.strip()
             
@@ -175,21 +459,16 @@ Tüm bu analizleri birleştirerek kapsamlı bir güvenlik değerlendirmesi yap:
 Profesyonel, detaylı ve anlaşılır bir analiz sun. Türkçe olarak yaz.
 """
             
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "Sen kıdemli bir siber güvenlik uzmanısın. Çeşitli kaynaklardan gelen güvenlik verilerini birleştirerek kapsamlı risk değerlendirmeleri yapıyorsun. Analizin profesyonel, objektif ve pratik olmalı."
-                    },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                max_tokens=self.max_tokens,
-                temperature=self.temperature
-            )
+            response = self._make_openai_request([
+                {
+                    "role": "system",
+                    "content": "Sen kıdemli bir siber güvenlik uzmanısın. Çeşitli kaynaklardan gelen güvenlik verilerini birleştirerek kapsamlı risk değerlendirmeleri yapıyorsun. Analizin profesyonel, objektif ve pratik olmalı."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ], max_tokens=self.max_tokens, temperature=self.temperature)
             
             return response.choices[0].message.content.strip()
             
@@ -203,6 +482,255 @@ Profesyonel, detaylı ve anlaşılır bir analiz sun. Türkçe olarak yaz.
             
             # Diğer hatalar için fallback döndür
             return self._generate_fallback_comprehensive_analysis(analysis_data, str(e))
+
+    def analyze_with_chunking(self, target: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Analyze using chunk-based approach for better rate limit management
+        
+        Args:
+            target: The analyzed target
+            analysis_data: Combined data from all security APIs
+            
+        Returns:
+            Dictionary with chunked analyses and final summary
+        """
+        # Check cache first
+        cached_result = self.cache_manager.get_cached_analysis(target, analysis_data)
+        if cached_result:
+            logger.info(f"Returning cached analysis for target: {target}")
+            return cached_result
+        
+        # Check if quota is exceeded (early exit)
+        if self.rate_limit_manager.rate_limit.quota_exceeded:
+            logger.warning("OpenAI quota exceeded - using rule-based analysis for chunked request")
+            fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+            fallback_result['ai_error_message'] = "⚠️ OpenAI quota aşıldı. Kural tabanlı analiz kullanılıyor..."
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+            return fallback_result
+        
+        if not self.client:
+            fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+            fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: API anahtarı yapılandırılmamış. Kural tabanlı analiz uygulanıyor..."
+            return fallback_result
+        
+        try:
+            # Assess threat level
+            threat_level = self._assess_threat_level(analysis_data)
+            
+            # For low threat levels in conservative mode, use rule-based analysis
+            if threat_level == 'LOW' and os.getenv('AI_CONSERVATIVE_MODE', 'true').lower() == 'true':
+                logger.info("Using rule-based analysis for low-threat target to conserve API quota")
+                fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+                fallback_result['ai_error_message'] = "ℹ️ API kotası korunması için kural tabanlı analiz kullanıldı (düşük risk tespit edildi)"
+                self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+                return fallback_result
+            
+            # Create chunks from analysis data
+            chunks = self.data_chunker.chunk_analysis_data(analysis_data)
+            prompts = self.data_chunker.create_analysis_prompts(chunks, target)
+            
+            # Analyze each chunk
+            chunk_results = {}
+            successful_chunks = 0
+            
+            for i, (prompt, estimated_tokens) in enumerate(prompts):
+                chunk_source = chunks[i]['source']
+                
+                try:
+                    # Check if we should process this chunk
+                    if not self._should_process_chunk(chunks[i], threat_level):
+                        chunk_results[chunk_source] = self._generate_step_fallback_analysis(
+                            chunk_source, chunks[i]['data'], "low_priority_skipped"
+                        )
+                        continue
+                    
+                    # Make chunked AI request
+                    response = self._make_openai_request([
+                        {"role": "system", "content": "Sen bir siber güvenlik uzmanısın. Kısa ve net analizler yapıyorsun."},
+                        {"role": "user", "content": prompt}
+                    ], max_tokens=300, temperature=0.3)  # Free tier için optimize edilmiş
+                    
+                    chunk_results[chunk_source] = response.choices[0].message.content.strip()
+                    successful_chunks += 1
+                    
+                    # Small delay between chunks to be respectful
+                    time.sleep(0.5)
+                    
+                except Exception as chunk_error:
+                    logger.warning(f"Chunk analysis failed for {chunk_source}: {str(chunk_error)}")
+                    chunk_results[chunk_source] = self._generate_step_fallback_analysis(
+                        chunk_source, chunks[i]['data'], str(chunk_error)
+                    )
+            
+            # Generate final synthesis if we have successful chunks
+            try:
+                if successful_chunks > 0:
+                    final_analysis = self._synthesize_chunk_results(target, chunk_results, analysis_data)
+                    ai_error_message = None
+                else:
+                    # All chunks failed, use fallback
+                    final_analysis = self._generate_fallback_comprehensive_analysis(analysis_data, "all_chunks_failed")
+                    ai_error_message = "⚠️ Tüm AI chunk'ları başarısız oldu. Kural tabanlı analiz uygulanıyor..."
+                    
+            except Exception as synthesis_error:
+                logger.warning(f"Final synthesis failed: {str(synthesis_error)}")
+                final_analysis = self._generate_fallback_comprehensive_analysis(analysis_data, str(synthesis_error))
+                
+                error_str = str(synthesis_error).lower()
+                if 'quota' in error_str or '429' in error_str:
+                    ai_error_message = "⚠️ AI sentez aşamasında quota aşıldı. Parçalı analiz sonuçları kullanılıyor..."
+                else:
+                    ai_error_message = "⚠️ AI sentez başarısız. Parçalı analiz sonuçları kullanılıyor..."
+            
+            result = {
+                'chunk_analyses': chunk_results,
+                'final_comprehensive_analysis': final_analysis,
+                'analysis_method': 'chunked_ai_analysis',
+                'successful_chunks': successful_chunks,
+                'total_chunks': len(prompts),
+                'threat_level': threat_level,
+                'ai_error_message': ai_error_message,
+                'rate_limit_status': self.rate_limit_manager.get_status()
+            }
+            
+            # Cache the result
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, result)
+            return result
+            
+        except Exception as e:
+            logger.warning(f"Chunked AI analysis error: {str(e)}")
+            fallback_result = self._generate_comprehensive_fallback_analysis(target, analysis_data)
+            
+            error_str = str(e).lower()
+            if 'quota' in error_str or '429' in error_str:
+                fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: OpenAI API kotası aşıldı. Kural tabanlı analiz uygulanıyor..."
+            else:
+                fallback_result['ai_error_message'] = "⚠️ AI analiz yapılamadı: Teknik bir hata oluştu. Kural tabanlı analiz uygulanıyor..."
+                
+            self.cache_manager.save_analysis_to_cache(target, analysis_data, fallback_result)
+            return fallback_result
+
+    def _should_process_chunk(self, chunk: Dict[str, Any], threat_level: str) -> bool:
+        """Chunk'ın işlenip işlenmeyeceğini belirle"""
+        # Yüksek risk durumunda tüm chunk'ları işle
+        if threat_level == 'HIGH':
+            return True
+        
+        # Orta risk durumunda ana chunk'ları işle
+        if threat_level == 'MEDIUM':
+            return chunk.get('chunk_type') != 'categories'
+        
+        # Düşük risk durumunda sadece temel chunk'ları işle
+        return chunk.get('chunk_type') in ['single_source', 'basic_info']
+
+    def _synthesize_chunk_results(self, target: str, chunk_results: Dict[str, str], analysis_data: Dict[str, Any]) -> str:
+        """Chunk sonuçlarını birleştirip final analiz oluştur"""
+        # Chunk sonuçlarını birleştir
+        combined_analysis = "\n\n".join([
+            f"### {source.replace('_data', '').title()}:\n{result}"
+            for source, result in chunk_results.items()
+        ])
+        
+        # Get summary stats
+        summary_stats = self._get_analysis_summary_stats(analysis_data)
+        
+        synthesis_prompt = f"""Hedef: {target}
+
+Aşağıdaki parçalı güvenlik analizlerini değerlendirdim:
+
+{combined_analysis}
+
+## Özet İstatistikler:
+{json.dumps(summary_stats, indent=2, ensure_ascii=False)}
+
+Bu analizleri birleştirerek kapsamlı bir güvenlik değerlendirmesi yap:
+
+1. **GENEL RİSK SEVİYESİ** (Kritik/Yüksek/Orta/Düşük)
+
+2. **ANA BULGULAR** (3-4 önemli nokta)
+
+3. **ÖNERİLER** (Pratik öneriler)
+
+4. **SONUÇ** (Net sonuç ve eylem önerisi)
+
+Profesyonel ve özet bir analiz sun (maksimum 300 kelime):"""
+        
+        response = self._make_openai_request([
+            {
+                "role": "system",
+                "content": "Sen kıdemli bir siber güvenlik uzmanısın. Parçalı analizleri birleştirerek kapsamlı değerlendirmeler yapıyorsun."
+            },
+            {
+                "role": "user",
+                "content": synthesis_prompt
+            }
+        ], max_tokens=600, temperature=0.2)  # Free tier için optimize edilmiş synthesis
+        
+        return response.choices[0].message.content.strip()
+
+    def _assess_threat_level(self, analysis_data: Dict[str, Any]) -> str:
+        """Threat seviyesini belirle API çağrılarını optimize etmek için"""
+        score = 0
+        
+        # VirusTotal skorları
+        vt = analysis_data.get('virustotal_data', {})
+        if vt and 'error' not in vt:
+            score += vt.get('malicious_count', 0) * 3
+            score += vt.get('suspicious_count', 0) * 1
+        
+        # URLScan skorları
+        urlscan = analysis_data.get('urlscan_data', {})
+        if urlscan and 'error' not in urlscan:
+            score += urlscan.get('malicious_domains', 0) * 2
+            score += urlscan.get('suspicious_domains', 0) * 1
+        
+        # AbuseIPDB skorları
+        abuse = analysis_data.get('abuseipdb_data', {})
+        if abuse and 'error' not in abuse:
+            confidence = abuse.get('abuse_confidence', 0)
+            if confidence > 75:
+                score += 3
+            elif confidence > 50:
+                score += 2
+            elif confidence > 25:
+                score += 1
+        
+        # Skorlara göre threat level belirle
+        if score >= 8:
+            return 'HIGH'
+        elif score >= 3:
+            return 'MEDIUM'
+        else:
+            return 'LOW'
+
+    def _generate_step_fallback_analysis(self, step_name: str, step_data: Dict[str, Any], error: str) -> str:
+        """Tek bir step için fallback analiz oluştur"""
+        if error == "low_priority_skipped":
+            return f"{step_name} analizi: Düşük priorite nedeniyle atlandı (API kotası korunması)"
+        
+        # Basit kural tabanlı analiz
+        if 'virustotal' in step_name.lower():
+            malicious = step_data.get('malicious_count', 0)
+            if malicious > 0:
+                return f"VirusTotal: {malicious} güvenlik motoru zararlı olarak işaretlemiş (Yüksek Risk)"
+            else:
+                return "VirusTotal: Zararlı içerik tespit edilmedi (Temiz)"
+        
+        elif 'urlscan' in step_name.lower():
+            malicious_domains = step_data.get('malicious_domains', 0)
+            if malicious_domains > 0:
+                return f"URLScan: {malicious_domains} zararlı domain tespit edildi (Risk var)"
+            else:
+                return "URLScan: Zararlı domain tespit edilmedi (Temiz)"
+        
+        elif 'abuseipdb' in step_name.lower():
+            confidence = step_data.get('abuse_confidence', 0)
+            if confidence > 50:
+                return f"AbuseIPDB: %{confidence} kötüye kullanım güveni (Dikkatli olunmalı)"
+            else:
+                return "AbuseIPDB: Düşük kötüye kullanım riski (Temiz)"
+        
+        return f"{step_name}: Analiz tamamlanamadı ({error})"
 
     def _generate_fallback_comprehensive_analysis(self, analysis_data: Dict[str, Any], error: str) -> str:
         """Generate rule-based comprehensive analysis when AI fails"""
@@ -375,7 +903,34 @@ Not: Bu temel analiz kurallara dayalı olarak oluşturulmuştur."""
         return stats
 
     def _generate_comprehensive_fallback_analysis(self, target: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate comprehensive fallback analysis when AI is not available"""
+        """Generate comprehensive fallback analysis using enhanced rule-based analyzer"""
+        try:
+            # Use the enhanced rule-based analyzer for comprehensive analysis
+            analysis_result = self.enhanced_rule_analyzer.analyze_comprehensive(target, analysis_data)
+            
+            # Format the response in the expected structure
+            return {
+                'analysis': analysis_result.get('final_comprehensive_analysis', 'Gelişmiş kural tabanlı analiz tamamlandı.'),
+                'risk_score': analysis_result.get('risk_level', 'Medium'),
+                'recommendations': [],  # Enhanced analyzer doesn't return recommendations in this format
+                'summary': {
+                    'total_sources': len([k for k in analysis_data.keys() if '_data' in k and 'error' not in analysis_data.get(k, {})]),
+                    'threat_level': analysis_result.get('risk_level', 'Medium'),
+                    'confidence': analysis_result.get('confidence', 'Medium'),
+                    'threat_count': analysis_result.get('threat_count', 0),
+                    'numeric_score': analysis_result.get('risk_score', 50)
+                },
+                'individual_analyses': analysis_result.get('step_analyses', {}),
+                'method': 'enhanced_rule_based',
+                'fallback_reason': 'AI unavailable - using enhanced rule-based analysis'
+            }
+        except Exception as e:
+            logger.error(f"Enhanced rule analyzer failed: {e}")
+            # Fallback to basic rule analysis
+            return self._generate_basic_fallback_analysis(target, analysis_data)
+    
+    def _generate_basic_fallback_analysis(self, target: str, analysis_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate basic fallback analysis when enhanced analyzer fails"""
         step_analyses = {}
         
         # Individual source analyses
@@ -654,7 +1209,18 @@ Lütfen analizi mesleki, anlaşılır ve Türkçe olarak yap. Teknik terimler ku
     
     def _generate_step_fallback_analysis(self, source_name: str, data: dict, error: str) -> str:
         """Generate fallback analysis for step-by-step analysis when AI API fails"""
-        # Provide source-specific fallback analysis
+        # Check if it's a clean source
+        if error == "clean_source":
+            if 'urlscan' in source_name.lower():
+                return "URLScan.io: Zararlı veya şüpheli içerik tespit edilmedi. Hedef bu açıdan güvenli görünüyor."
+            elif 'virustotal' in source_name.lower():
+                clean = data.get('clean_count', 0)
+                total = data.get('total_engines', 0)
+                return f"VirusTotal: {total} güvenlik motorunun hiçbiri zararlı olarak işaretlemedi. Temiz görünüyor."
+            elif 'abuseipdb' in source_name.lower():
+                return "AbuseIPDB: Kötüye kullanım raporu bulunmuyor. Temiz IP adresi."
+        
+        # Provide source-specific fallback analysis for threats
         if 'urlscan' in source_name.lower():
             malicious = data.get('malicious_domains', 0)
             suspicious = data.get('suspicious_domains', 0) 
@@ -672,7 +1238,7 @@ Lütfen analizi mesleki, anlaşılır ve Türkçe olarak yap. Teknik terimler ku
                 return f"VirusTotal: {total} güvenlik motorunun hiçbiri zararlı olarak işaretlemedi. Temiz görünüyor."
                 
         elif 'abuseipdb' in source_name.lower():
-            confidence = data.get('confidence_percentage', 0)
+            confidence = data.get('abuse_confidence', 0)
             reports = data.get('total_reports', 0)
             if confidence > 50 or reports > 0:
                 return f"AbuseIPDB: %{confidence} güven skoruyla {reports} kötüye kullanım raporu var. Risk mevcut."

@@ -13,11 +13,23 @@ logger = logging.getLogger(__name__)
 class SecurityAnalyzer:
     """Main security analysis orchestrator"""
     
-    def __init__(self):
-        self.urlscan_client = URLScanClient()
-        self.virustotal_client = VirusTotalClient()
-        self.abuseipdb_client = AbuseIPDBClient()
-        self.ai_analyzer = AIAnalyzer()
+    def __init__(self, api_keys=None):
+        """
+        Initialize SecurityAnalyzer with optional custom API keys
+        
+        Args:
+            api_keys: Dictionary with custom API keys to use instead of environment variables
+                     Format: {
+                         'urlscan_api_key': 'key',
+                         'virustotal_api_key': 'key', 
+                         'abuseipdb_api_key': 'key',
+                         'openai_api_key': 'key'
+                     }
+        """
+        self.urlscan_client = URLScanClient(api_keys.get('urlscan_api_key') if api_keys else None)
+        self.virustotal_client = VirusTotalClient(api_keys.get('virustotal_api_key') if api_keys else None)
+        self.abuseipdb_client = AbuseIPDBClient(api_keys.get('abuseipdb_api_key') if api_keys else None)
+        self.ai_analyzer = AIAnalyzer(api_keys.get('openai_api_key') if api_keys else None)
     
     def analyze(self, target: str) -> Dict[str, Any]:
         """

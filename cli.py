@@ -27,6 +27,7 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from services.security_analyzer import SecurityAnalyzer
 from utils.validators import validate_target
 from utils.response_formatter import format_response
+from utils.cache_manager import CacheManager
 
 # Initialize colorama for cross-platform colored output
 colorama.init(autoreset=True)
@@ -34,7 +35,8 @@ colorama.init(autoreset=True)
 class SecAppCLI:
     def __init__(self):
         self.analyzer = SecurityAnalyzer()
-        self.version = "1.0.0"
+        self.cache_manager = CacheManager()
+        self.version = "1.2.0"
         
     def print_banner(self):
         """Print the SecApp banner"""
@@ -461,6 +463,45 @@ class SecAppCLI:
             if output_format == 'json':
                 self.save_json_report(combined_report, f"{output_dir}/batch_report.json")
 
+    def show_cache_stats(self):
+        """Show cache statistics"""
+        try:
+            stats = self.cache_manager.get_cache_stats()
+            
+            print(f"\n{Fore.CYAN}{'='*50}")
+            print(f"{Fore.WHITE}{Style.BRIGHT}CACHE STATISTICS{Style.RESET_ALL}")
+            print(f"{Fore.CYAN}{'='*50}")
+            
+            if 'error' in stats:
+                self.print_status(f"Error getting cache stats: {stats['error']}", "ERROR")
+                return
+            
+            print(f"{Fore.WHITE}Cache Directory: {Fore.YELLOW}{stats['cache_dir']}")
+            print(f"{Fore.WHITE}Total Files: {Fore.GREEN}{stats['total_files']}")
+            print(f"{Fore.WHITE}Total Size: {Fore.GREEN}{stats['total_size_bytes']:,} bytes")
+            print(f"{Fore.WHITE}Expired Files: {Fore.RED}{stats['expired_files']}")
+            print(f"{Fore.WHITE}TTL: {Fore.YELLOW}{stats['ttl_seconds']} seconds ({stats['ttl_seconds']//3600} hours)")
+            
+            if stats['expired_files'] > 0:
+                print(f"\n{Fore.YELLOW}💡 Tip: Run --cache-clear to remove expired files")
+                
+        except Exception as e:
+            self.print_status(f"Error showing cache stats: {str(e)}", "ERROR")
+
+    def clear_cache(self):
+        """Clear cache files"""
+        try:
+            print(f"\n{Fore.YELLOW}Clearing cache files...")
+            cleared_count = self.cache_manager.clear_cache()
+            
+            if cleared_count > 0:
+                self.print_status(f"Cleared {cleared_count} cache files", "SUCCESS")
+            else:
+                self.print_status("No cache files to clear", "INFO")
+                
+        except Exception as e:
+            self.print_status(f"Error clearing cache: {str(e)}", "ERROR")
+
 def main():
     parser = argparse.ArgumentParser(
         description="SecApp CLI - Advanced Cybersecurity Analysis Platform",
@@ -493,12 +534,27 @@ Examples:
                        help='Run in interactive mode')
     parser.add_argument('--no-ai', action='store_true',
                        help='Disable AI analysis and use rule-based analysis only')
-    parser.add_argument('--version', action='version', version='SecApp CLI 1.0.0')
+    parser.add_argument('--cache-stats', action='store_true',
+                       help='Show cache statistics')
+    parser.add_argument('--cache-clear', action='store_true',
+                       help='Clear all cached analysis results')
+    parser.add_argument('--version', action='version', version='SecApp CLI 1.2.0')
     
     args = parser.parse_args()
     
     # Initialize CLI
     cli = SecAppCLI()
+    
+    # Handle cache commands first
+    if args.cache_stats:
+        cli.print_banner()
+        cli.show_cache_stats()
+        return
+    
+    if args.cache_clear:
+        cli.print_banner()
+        cli.clear_cache()
+        return
     
     # Show banner
     cli.print_banner()

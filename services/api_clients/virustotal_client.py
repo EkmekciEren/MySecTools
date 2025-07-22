@@ -9,8 +9,14 @@ logger = logging.getLogger(__name__)
 class VirusTotalClient:
     """VirusTotal API client for URL/IP/Domain analysis"""
     
-    def __init__(self):
-        self.api_key = os.getenv('VIRUSTOTAL_API_KEY')
+    def __init__(self, api_key=None):
+        """
+        Initialize VirusTotal client
+        
+        Args:
+            api_key: Custom API key to use instead of environment variable
+        """
+        self.api_key = api_key or os.getenv('VIRUSTOTAL_API_KEY')
         self.base_url = 'https://www.virustotal.com/api/v3'
         self.headers = {
             'x-apikey': self.api_key

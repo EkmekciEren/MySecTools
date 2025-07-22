@@ -29,6 +29,7 @@ except ImportError as e:
     print(f"Warning: ReportLab not installed. PDF generation will be unavailable. Error: {e}")
 
 from services.security_analyzer import SecurityAnalyzer
+from utils.cache_manager import CacheManager
 from utils.validators import validate_target
 from utils.response_formatter import format_response
 
@@ -45,19 +46,29 @@ logger = logging.getLogger(__name__)
 # Initialize security analyzer
 security_analyzer = SecurityAnalyzer()
 
+# Initialize cache manager
+cache_manager = CacheManager()
+
 @app.route('/')
 def index():
     """Serve the main page"""
     return render_template('index.html')
 
-@app.route('/analyze', methods=['GET'])
+@app.route('/analyze', methods=['GET', 'POST'])
 def analyze():
     """
     Main analysis endpoint
-    Usage: /analyze?target=example.com
+    Usage: /analyze?target=example.com or POST with JSON
     """
     try:
-        target = request.args.get('target')
+        # Get target from query parameter or JSON body
+        if request.method == 'GET':
+            target = request.args.get('target')
+            api_keys = None
+        else:
+            data = request.get_json()
+            target = data.get('target') if data else None
+            api_keys = data.get('api_keys') if data else None
         
         if not target:
             return jsonify({
@@ -74,8 +85,14 @@ def analyze():
         
         logger.info(f"Starting analysis for target: {target}")
         
-        # Perform security analysis
-        analysis_result = security_analyzer.analyze(target)
+        # Create a new analyzer instance with custom API keys if provided
+        if api_keys:
+            from services.security_analyzer import SecurityAnalyzer
+            custom_analyzer = SecurityAnalyzer(api_keys=api_keys)
+            analysis_result = custom_analyzer.analyze(target)
+        else:
+            # Use default analyzer with environment variables
+            analysis_result = security_analyzer.analyze(target)
         
         # Format response
         response = format_response(target, analysis_result)
@@ -90,6 +107,86 @@ def analyze():
             'message': str(e)
         }), 500
 
+@app.route('/test-api-keys', methods=['POST'])
+def test_api_keys():
+    """
+    Test API keys without running full analysis
+    """
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        
+        api_keys = data.get('api_keys', {})
+        test_results = {}
+        
+        # Test each API key individually
+        from services.api_clients.urlscan_client import URLScanClient
+        from services.api_clients.virustotal_client import VirusTotalClient  
+        from services.api_clients.abuseipdb_client import AbuseIPDBClient
+        from services.ai_analyzer import AIAnalyzer
+        
+        # Test URLScan API
+        if 'urlscan_api_key' in api_keys:
+            try:
+                client = URLScanClient(api_keys['urlscan_api_key'])
+                # Simple validation - check if key format is valid
+                if len(api_keys['urlscan_api_key']) >= 32:
+                    test_results['urlscan'] = {'status': 'valid_format', 'message': 'API anahtarı formatı geçerli'}
+                else:
+                    test_results['urlscan'] = {'status': 'invalid_format', 'message': 'API anahtarı formatı geçersiz'}
+            except Exception as e:
+                test_results['urlscan'] = {'status': 'error', 'message': str(e)}
+        
+        # Test VirusTotal API
+        if 'virustotal_api_key' in api_keys:
+            try:
+                client = VirusTotalClient(api_keys['virustotal_api_key'])
+                # Simple validation - check if key format is valid
+                if len(api_keys['virustotal_api_key']) >= 32:
+                    test_results['virustotal'] = {'status': 'valid_format', 'message': 'API anahtarı formatı geçerli'}
+                else:
+                    test_results['virustotal'] = {'status': 'invalid_format', 'message': 'API anahtarı formatı geçersiz'}
+            except Exception as e:
+                test_results['virustotal'] = {'status': 'error', 'message': str(e)}
+        
+        # Test AbuseIPDB API
+        if 'abuseipdb_api_key' in api_keys:
+            try:
+                client = AbuseIPDBClient(api_keys['abuseipdb_api_key'])
+                # Simple validation - check if key format is valid
+                if len(api_keys['abuseipdb_api_key']) >= 32:
+                    test_results['abuseipdb'] = {'status': 'valid_format', 'message': 'API anahtarı formatı geçerli'}
+                else:
+                    test_results['abuseipdb'] = {'status': 'invalid_format', 'message': 'API anahtarı formatı geçersiz'}
+            except Exception as e:
+                test_results['abuseipdb'] = {'status': 'error', 'message': str(e)}
+        
+        # Test OpenAI API  
+        if 'openai_api_key' in api_keys:
+            try:
+                analyzer = AIAnalyzer(api_keys['openai_api_key'])
+                # Simple validation - check if key format is valid
+                if api_keys['openai_api_key'].startswith('sk-'):
+                    test_results['openai'] = {'status': 'valid_format', 'message': 'API anahtarı formatı geçerli'}
+                else:
+                    test_results['openai'] = {'status': 'invalid_format', 'message': 'API anahtarı formatı geçersiz (sk- ile başlamalı)'}
+            except Exception as e:
+                test_results['openai'] = {'status': 'error', 'message': str(e)}
+        
+        return jsonify({
+            'status': 'success',
+            'test_results': test_results,
+            'message': 'API anahtarları test edildi'
+        })
+        
+    except Exception as e:
+        logger.error(f"API key test error: {str(e)}")
+        return jsonify({
+            'error': 'API anahtarı testi başarısız',
+            'message': str(e)
+        }), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
@@ -97,6 +194,46 @@ def health():
         'status': 'healthy',
         'message': 'Security Analysis API is running'
     })
+
+@app.route('/cache/stats', methods=['GET'])
+def cache_stats():
+    """Get cache statistics and rate limit status"""
+    try:
+        stats = cache_manager.get_cache_stats()
+        
+        # Get rate limit status from AI analyzer
+        from services.ai_analyzer import AIAnalyzer
+        ai_analyzer = AIAnalyzer()
+        rate_limit_status = ai_analyzer.rate_limit_manager.get_status()
+        
+        return jsonify({
+            'status': 'success',
+            'cache_stats': stats,
+            'rate_limit_status': rate_limit_status
+        })
+    except Exception as e:
+        logger.error(f"Cache stats error: {str(e)}")
+        return jsonify({
+            'error': 'Cache istatistikleri alınamadı',
+            'message': str(e)
+        }), 500
+
+@app.route('/cache/clear', methods=['POST'])
+def clear_cache():
+    """Clear cache files"""
+    try:
+        cleared_count = cache_manager.clear_cache()
+        return jsonify({
+            'status': 'success',
+            'message': f'{cleared_count} cache dosyası temizlendi',
+            'cleared_files': cleared_count
+        })
+    except Exception as e:
+        logger.error(f"Cache clear error: {str(e)}")
+        return jsonify({
+            'error': 'Cache temizlenemedi',
+            'message': str(e)
+        }), 500
 
 @app.route('/test-export', methods=['GET'])
 def test_export():

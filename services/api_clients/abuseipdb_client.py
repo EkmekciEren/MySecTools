@@ -9,8 +9,14 @@ logger = logging.getLogger(__name__)
 class AbuseIPDBClient:
     """AbuseIPDB API client for IP reputation analysis"""
     
-    def __init__(self):
-        self.api_key = os.getenv('ABUSEIPDB_API_KEY')
+    def __init__(self, api_key=None):
+        """
+        Initialize AbuseIPDB client
+        
+        Args:
+            api_key: Custom API key to use instead of environment variable
+        """
+        self.api_key = api_key or os.getenv('ABUSEIPDB_API_KEY')
         self.base_url = 'https://api.abuseipdb.com/api/v2'
         self.headers = {
             'Key': self.api_key,

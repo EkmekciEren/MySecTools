@@ -9,8 +9,14 @@ logger = logging.getLogger(__name__)
 class URLScanClient:
     """URLScan.io API client for URL analysis"""
     
-    def __init__(self):
-        self.api_key = os.getenv('URLSCAN_API_KEY')
+    def __init__(self, api_key=None):
+        """
+        Initialize URLScan client
+        
+        Args:
+            api_key: Custom API key to use instead of environment variable
+        """
+        self.api_key = api_key or os.getenv('URLSCAN_API_KEY')
         self.base_url = 'https://urlscan.io/api/v1'
         self.headers = {
             'API-Key': self.api_key,
